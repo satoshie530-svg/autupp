@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícono de notificación: Android exige silueta blanca lisa, sin color propio
+     (el sistema la tinta solo). Reutiliza el mismo glifo del logo de la app. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,24 L60,24 L60,54 L70,54 L54,74 L38,54 L48,54 Z" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M28,80 L28,88 Q28,92 32,92 L76,92 Q80,92 80,88 L80,80" />
+</vector>

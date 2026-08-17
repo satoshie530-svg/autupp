@@ -15,7 +15,11 @@ data class AppCatalogItem(
     val versionName: String,
     val downloadUrl: String,
     val changelog: String,
-    val iconUrl: String? = null
+    val iconUrl: String? = null,
+    // SHA-256 en hex del .apk, opcional. Si viene, se verifica el archivo
+    // descargado antes de ofrecer instalarlo (protege contra una subida a
+    // medias o corrupta al servidor, no solo contra ataques de red).
+    val sha256: String? = null
 )
 
 /**
@@ -27,7 +31,8 @@ data class ManagerAppInfo(
     val versionCode: Long,
     val versionName: String,
     val downloadUrl: String,
-    val changelog: String
+    val changelog: String,
+    val sha256: String? = null
 )
 
 @Serializable

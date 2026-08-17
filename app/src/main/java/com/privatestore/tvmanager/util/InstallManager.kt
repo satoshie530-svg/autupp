@@ -12,6 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
+import java.security.MessageDigest
 
 sealed class DownloadEvent {
     data class Progress(val percent: Int) : DownloadEvent()
@@ -28,10 +29,17 @@ class InstallManager(private val context: Context) {
 
     private val httpClient = OkHttpClient()
 
-    fun downloadApk(downloadUrl: String, packageName: String): Flow<DownloadEvent> = flow {
+    fun downloadApk(
+        downloadUrl: String,
+        packageName: String,
+        expectedSha256: String? = null
+    ): Flow<DownloadEvent> = flow {
         val destination = PackageUtils.cachedApkFile(context, packageName)
         destination.parentFile?.mkdirs()
         val request = Request.Builder().url(downloadUrl).build()
+        // Se calcula en la misma pasada de escritura (no releyendo el archivo
+        // después): un solo recorrido de los bytes, sin costo extra de IO.
+        val digest = MessageDigest.getInstance("SHA-256")
 
         try {
             httpClient.newCall(request).execute().use { response ->
@@ -53,6 +61,7 @@ class InstallManager(private val context: Context) {
                         var bytes = input.read(buffer)
                         while (bytes >= 0) {
                             output.write(buffer, 0, bytes)
+                            digest.update(buffer, 0, bytes)
                             readBytes += bytes
                             if (totalBytes > 0) {
                                 val percent = (readBytes * 100 / totalBytes).toInt()
@@ -66,6 +75,16 @@ class InstallManager(private val context: Context) {
                     }
                 }
             }
+
+            if (expectedSha256 != null) {
+                val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
+                if (!actualHash.equals(expectedSha256.trim(), ignoreCase = true)) {
+                    destination.delete()
+                    emit(DownloadEvent.Failed("El archivo descargado no coincide con el esperado (posible descarga corrupta)"))
+                    return@flow
+                }
+            }
+
             emit(DownloadEvent.Done(destination))
         } catch (e: IOException) {
             destination.delete()

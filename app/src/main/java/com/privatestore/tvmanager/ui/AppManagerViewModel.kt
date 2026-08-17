@@ -11,6 +11,7 @@ import com.privatestore.tvmanager.data.model.AppUiState
 import com.privatestore.tvmanager.data.model.ManagerUpdateState
 import com.privatestore.tvmanager.util.DownloadEvent
 import com.privatestore.tvmanager.util.InstallManager
+import com.privatestore.tvmanager.util.NotificationHelper
 import com.privatestore.tvmanager.util.PackageUtils
 import com.privatestore.tvmanager.util.PermissionUtils
 import com.privatestore.tvmanager.util.UninstallManager
@@ -118,16 +119,20 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
             return
         }
 
-        val currentStatus = _uiState.value.firstOrNull { it.packageName == packageName }?.status
-        if (currentStatus is AppStatus.ReadyToInstall) {
-            // Ya se descargó y verificó en segundo plano: directo al diálogo del
-            // sistema, sin volver a tocar la red.
+        val catalogItem = lastCatalog?.apps?.firstOrNull { it.packageName == packageName } ?: return
+
+        // No se confía en que el status en _uiState siga diciendo ReadyToInstall
+        // (podría haber quedado desactualizado si el catálogo cambió mientras
+        // tanto): se revalida el archivo cacheado contra lastCatalog en este mismo
+        // instante. Instalar un .apk viejo porque el status mentía sería peor que
+        // el costo de esta verificación extra.
+        val cachedFile = PackageUtils.cachedApkFile(getApplication(), packageName)
+        val cachedVersionCode = PackageUtils.getApkFileVersionCode(getApplication(), cachedFile)
+        if (cachedVersionCode == catalogItem.versionCode) {
             updateStatus(packageName, AppStatus.Installing(isCleanReinstall))
-            installManager.requestInstall(PackageUtils.cachedApkFile(getApplication(), packageName))
+            installManager.requestInstall(cachedFile)
             return
         }
-
-        val catalogItem = lastCatalog?.apps?.firstOrNull { it.packageName == packageName } ?: return
 
         // Se fija en 0% de forma síncrona (antes de tocar la red) para que la tarjeta
         // pase directo a la barra de progreso sin pasar por "No instalada" un instante,
@@ -135,7 +140,7 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
         updateStatus(packageName, AppStatus.Downloading(progress = 0, isCleanReinstall = isCleanReinstall))
 
         viewModelScope.launch {
-            installManager.downloadApk(catalogItem.downloadUrl, packageName).collect { event ->
+            installManager.downloadApk(catalogItem.downloadUrl, packageName, catalogItem.sha256).collect { event ->
                 when (event) {
                     is DownloadEvent.Progress ->
                         updateStatus(packageName, AppStatus.Downloading(event.percent, isCleanReinstall))
@@ -184,7 +189,7 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
 
         viewModelScope.launch {
             val selfPackageName = getApplication<Application>().packageName
-            installManager.downloadApk(managerApp.downloadUrl, selfPackageName).collect { event ->
+            installManager.downloadApk(managerApp.downloadUrl, selfPackageName, managerApp.sha256).collect { event ->
                 when (event) {
                     is DownloadEvent.Progress ->
                         _managerUpdateState.value = ManagerUpdateState.Downloading(event.percent)
@@ -214,8 +219,41 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     private fun refreshLocalStates() {
+        val previousStates = _uiState.value
         _uiState.value = repository.buildLocalStates(lastCatalog)
         _banner.value = lastCatalog?.banner
+        syncCacheAndNotifications(previousStates, _uiState.value)
+    }
+
+    /**
+     * Un solo lugar para dos efectos secundarios que dependen de la transición
+     * de estado, no del estado en sí: avisar solo la primera vez que algo queda
+     * ReadyToInstall (no en cada refresh mientras siga en ese estado), y borrar
+     * el .apk cacheado en cuanto deja de servir para algo (la app ya quedó al día).
+     */
+    private fun syncCacheAndNotifications(previous: List<AppUiState>, current: List<AppUiState>) {
+        current.forEach { appState ->
+            when (val status = appState.status) {
+                is AppStatus.UpToDate -> {
+                    installManager.clearCachedApk(appState.packageName)
+                    NotificationHelper.cancel(getApplication(), appState.packageName)
+                }
+                is AppStatus.ReadyToInstall -> {
+                    val wasAlreadyReady = previous.any {
+                        it.packageName == appState.packageName && it.status is AppStatus.ReadyToInstall
+                    }
+                    if (!wasAlreadyReady) {
+                        NotificationHelper.notifyReadyToInstall(
+                            getApplication(),
+                            appState.packageName,
+                            appState.displayName,
+                            status.remoteVersionName
+                        )
+                    }
+                }
+                else -> Unit
+            }
+        }
     }
 
     /**
@@ -236,7 +274,7 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
         val catalogItem = lastCatalog?.apps?.firstOrNull { it.packageName == packageName } ?: return
 
         viewModelScope.launch {
-            installManager.downloadApk(catalogItem.downloadUrl, packageName).collect { event ->
+            installManager.downloadApk(catalogItem.downloadUrl, packageName, catalogItem.sha256).collect { event ->
                 when (event) {
                     is DownloadEvent.Progress ->
                         updateStatus(packageName, AppStatus.AutoDownloading(event.percent, remoteVersionName))

@@ -19,6 +19,11 @@
     -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!-- Aviso al terminar una descarga automática en 2do plano. Es "dangerous"
+         desde API 33, así que además se pide en tiempo de ejecución en
+         MainActivity; sin ella la app funciona igual, solo no llega el aviso. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!--
         El catálogo de apps administradas ahora es 100% dinámico (lo define
         catalog.json en tiempo de ejecución, no una lista fija compilada en la
