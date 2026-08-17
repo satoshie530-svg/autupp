@@ -53,6 +53,11 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
     // (flujo de "instalación limpia").
     private var pendingCleanInstallPackage: String? = null
 
+    // Paquetes con una descarga automática en curso en este ciclo de refresh, para
+    // no lanzar dos descargas paralelas del mismo APK. Se limpia por completo en
+    // cada refreshCatalog() explícito, que es el único punto de reintento.
+    private val autoDownloadingPackages = mutableSetOf<String>()
+
     init {
         refreshCatalog()
     }
@@ -73,6 +78,10 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
                 _catalogError.value = it.toUserMessage()
             }
             refreshLocalStates()
+            if (result.isSuccess) {
+                autoDownloadingPackages.clear()
+                triggerAutoDownloads()
+            }
             _isRefreshing.value = false
         }
     }
@@ -101,8 +110,6 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun install(packageName: String, isCleanReinstall: Boolean = false) {
-        val catalogItem = lastCatalog?.apps?.firstOrNull { it.packageName == packageName } ?: return
-
         // Sin este permiso el instalador del sistema solo mostrará su propia pantalla
         // de "fuente no permitida"; mejor evitar gastar datos descargando el APK y
         // guiar directo a Ajustes, como pide el flujo de permisos del proyecto.
@@ -110,6 +117,17 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
             openInstallPermissionSettings()
             return
         }
+
+        val currentStatus = _uiState.value.firstOrNull { it.packageName == packageName }?.status
+        if (currentStatus is AppStatus.ReadyToInstall) {
+            // Ya se descargó y verificó en segundo plano: directo al diálogo del
+            // sistema, sin volver a tocar la red.
+            updateStatus(packageName, AppStatus.Installing(isCleanReinstall))
+            installManager.requestInstall(PackageUtils.cachedApkFile(getApplication(), packageName))
+            return
+        }
+
+        val catalogItem = lastCatalog?.apps?.firstOrNull { it.packageName == packageName } ?: return
 
         // Se fija en 0% de forma síncrona (antes de tocar la red) para que la tarjeta
         // pase directo a la barra de progreso sin pasar por "No instalada" un instante,
@@ -198,6 +216,48 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
     private fun refreshLocalStates() {
         _uiState.value = repository.buildLocalStates(lastCatalog)
         _banner.value = lastCatalog?.banner
+    }
+
+    /**
+     * Dispara, para cada app con actualización pendiente, una descarga silenciosa
+     * en 2do plano (sin pedir instalar). Cuando termina, refreshLocalStates()
+     * detecta el archivo cacheado con la versión correcta y el estado pasa solo
+     * a ReadyToInstall — ahí el usuario solo confirma el diálogo, sin esperar red.
+     */
+    private fun triggerAutoDownloads() {
+        _uiState.value.forEach { appState ->
+            if (appState.status is AppStatus.UpdateAvailable && autoDownloadingPackages.add(appState.packageName)) {
+                autoDownloadUpdate(appState.packageName, appState.status.remoteVersionName)
+            }
+        }
+    }
+
+    private fun autoDownloadUpdate(packageName: String, remoteVersionName: String) {
+        val catalogItem = lastCatalog?.apps?.firstOrNull { it.packageName == packageName } ?: return
+
+        viewModelScope.launch {
+            installManager.downloadApk(catalogItem.downloadUrl, packageName).collect { event ->
+                when (event) {
+                    is DownloadEvent.Progress ->
+                        updateStatus(packageName, AppStatus.AutoDownloading(event.percent, remoteVersionName))
+
+                    is DownloadEvent.Done -> {
+                        autoDownloadingPackages.remove(packageName)
+                        // Recalcula desde repository: verifica versionCode del archivo
+                        // recién bajado y recién ahí pasa a ReadyToInstall.
+                        refreshLocalStates()
+                    }
+
+                    is DownloadEvent.Failed -> {
+                        autoDownloadingPackages.remove(packageName)
+                        // Silencioso a propósito: es una descarga que el usuario no pidió
+                        // directamente. Vuelve a UpdateAvailable; el próximo refresh
+                        // (manual o el siguiente onActivityResumed) reintenta solo.
+                        refreshLocalStates()
+                    }
+                }
+            }
+        }
     }
 
     private fun updateManagerUpdateState(response: AppCatalogResponse) {

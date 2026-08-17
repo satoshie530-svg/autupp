@@ -16,6 +16,9 @@ object TvAppManagerColors {
     val Error = Color(0xFFEF5350)
     val OnError = Color(0xFFFFFFFF)
     val UpdateBannerBackground = Color(0xFF15352C)
+
+    /** Borde sutil pero visible entre tarjetas, independiente del foco. */
+    val CardBorder = Color(0xFF283557)
 }
 
 val TvAppManagerColorScheme: ColorScheme = darkColorScheme(

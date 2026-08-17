@@ -28,11 +28,9 @@ class InstallManager(private val context: Context) {
 
     private val httpClient = OkHttpClient()
 
-    private val apkDir: File
-        get() = File(context.cacheDir, "apks").apply { mkdirs() }
-
     fun downloadApk(downloadUrl: String, packageName: String): Flow<DownloadEvent> = flow {
-        val destination = File(apkDir, "$packageName.apk")
+        val destination = PackageUtils.cachedApkFile(context, packageName)
+        destination.parentFile?.mkdirs()
         val request = Request.Builder().url(downloadUrl).build()
 
         try {
@@ -96,6 +94,6 @@ class InstallManager(private val context: Context) {
     }
 
     fun clearCachedApk(packageName: String) {
-        File(apkDir, "$packageName.apk").delete()
+        PackageUtils.cachedApkFile(context, packageName).delete()
     }
 }

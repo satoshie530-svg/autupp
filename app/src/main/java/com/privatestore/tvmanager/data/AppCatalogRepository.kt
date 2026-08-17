@@ -37,8 +37,17 @@ class AppCatalogRepository(
 
             val status = when {
                 installedInfo == null -> AppStatus.NotInstalled
-                catalogItem.versionCode > installedInfo.versionCode ->
-                    AppStatus.UpdateAvailable(installedInfo.versionName, catalogItem.versionName)
+                catalogItem.versionCode > installedInfo.versionCode -> {
+                    // ¿Ya se descargó (y verificó) esta misma versión en segundo plano?
+                    // Si sí, no hace falta volver a bajarla: se puede instalar directo.
+                    val cachedFile = PackageUtils.cachedApkFile(context, catalogItem.packageName)
+                    val cachedVersionCode = PackageUtils.getApkFileVersionCode(context, cachedFile)
+                    if (cachedVersionCode == catalogItem.versionCode) {
+                        AppStatus.ReadyToInstall(catalogItem.versionName)
+                    } else {
+                        AppStatus.UpdateAvailable(installedInfo.versionName, catalogItem.versionName)
+                    }
+                }
                 else -> AppStatus.UpToDate(installedInfo.versionName)
             }
 

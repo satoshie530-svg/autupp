@@ -1,6 +1,7 @@
 package com.privatestore.tvmanager.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,10 +38,10 @@ fun AppCard(
     modifier: Modifier = Modifier
 ) {
     val status = state.status
-    // Mientras hay una operación en curso (esperando confirmación del sistema,
-    // descargando o instalando) no se ofrece ninguna acción: evita dobles taps
-    // desde el mando y que "Desinstalar" aparezca durante una instalación limpia
-    // ya en marcha, cuando installedInfo todavía refleja el estado previo.
+    // Mientras hay una operación en curso que sí requiere esperar al usuario o al
+    // instalador (no la descarga silenciosa en 2do plano, esa no bloquea nada) se
+    // ocultan las acciones: evita dobles taps y que "Desinstalar" aparezca en medio
+    // de una instalación limpia ya en marcha, cuando installedInfo aún es el previo.
     val isBusy = status is AppStatus.UninstallPending ||
         status is AppStatus.Downloading ||
         status is AppStatus.Installing ||
@@ -52,11 +53,14 @@ fun AppCard(
     // centro del control disparaba la acción de la card) — "Desinstalar" quedaba
     // inalcanzable. focusGroup() en un contenedor no-clickeable deja que cada
     // botón sea su propio destino de navegación, como corresponde en TV.
+    // El borde es fijo (no depende del foco) para que las tarjetas se lean como
+    // piezas separadas incluso cuando ninguna tiene el foco todavía.
     Column(
         modifier = modifier
-            .width(280.dp)
+            .width(300.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(TvAppManagerColors.Surface)
+            .border(1.dp, TvAppManagerColors.CardBorder, RoundedCornerShape(12.dp))
             .focusGroup()
             .padding(20.dp)
     ) {
@@ -73,6 +77,14 @@ fun AppCard(
 
         when (status) {
             is AppStatus.Downloading -> LinearProgressIndicator(
+                progress = { status.progress / 100f },
+                color = TvAppManagerColors.Primary,
+                trackColor = TvAppManagerColors.SurfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            )
+            // Descarga silenciosa de una actualización: mismo estilo de barra,
+            // pero no cuenta como "ocupado" (isBusy no la incluye).
+            is AppStatus.AutoDownloading -> LinearProgressIndicator(
                 progress = { status.progress / 100f },
                 color = TvAppManagerColors.Primary,
                 trackColor = TvAppManagerColors.SurfaceVariant,
@@ -98,6 +110,10 @@ fun AppCard(
                 when (status) {
                     is AppStatus.NotInstalled -> ActionButton("Instalar", onInstall)
                     is AppStatus.UpdateAvailable -> ActionButton("Actualizar", onUpdate)
+                    // Corto a propósito ("Instalar" alcanza, el detalle ya está en
+                    // StatusLabel arriba): con "Instalar actualización" completo,
+                    // "Desinstalar" no entraba en la fila y se cortaba a "Desinst".
+                    is AppStatus.ReadyToInstall -> ActionButton("Instalar", onUpdate)
                     is AppStatus.UpToDate -> ActionButton("Abrir", onOpen)
                     is AppStatus.Error -> ActionButton("Reintentar", onInstall)
                     else -> Unit
@@ -108,7 +124,9 @@ fun AppCard(
                 }
             }
 
-            if (status is AppStatus.Error && state.installedInfo != null) {
+            // Siempre disponible mientras esté instalada, no solo tras un error:
+            // es la forma de forzar un reinicio limpio ante cualquier problema.
+            if (state.installedInfo != null) {
                 Row(modifier = Modifier.padding(top = 8.dp)) {
                     ActionButton("Instalación limpia", onCleanInstall)
                 }
@@ -157,6 +175,10 @@ private fun StatusLabel(status: AppStatus) {
         is AppStatus.UpToDate -> "Instalada · v${status.installedVersionName}"
         is AppStatus.UpdateAvailable ->
             "Actualización disponible: v${status.installedVersionName} → v${status.remoteVersionName}"
+        is AppStatus.AutoDownloading ->
+            "Descargando v${status.remoteVersionName} en 2do plano… ${status.progress}%"
+        is AppStatus.ReadyToInstall ->
+            "Actualización v${status.remoteVersionName} lista para instalar"
         is AppStatus.CheckingUpdate -> "Buscando actualizaciones…"
         is AppStatus.UninstallPending -> "Esperando confirmación de desinstalación…"
         is AppStatus.Downloading ->

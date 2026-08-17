@@ -11,6 +11,15 @@ sealed class AppStatus {
         val remoteVersionName: String
     ) : AppStatus()
 
+    /** Descarga silenciosa en 2do plano: la app sigue usable (Abrir/Desinstalar
+     *  siguen disponibles), no es un estado "ocupado" como Downloading. */
+    data class AutoDownloading(val progress: Int, val remoteVersionName: String) : AppStatus()
+
+    /** El APK de la nueva versión ya está en cacheDir y verificado (su
+     *  versionCode coincide con el del catálogo): instalar ya no requiere red,
+     *  va directo al diálogo de confirmación del sistema. */
+    data class ReadyToInstall(val remoteVersionName: String) : AppStatus()
+
     data object CheckingUpdate : AppStatus()
 
     /** Entre pulsar "Instalación limpia" y que el usuario confirme el diálogo de
