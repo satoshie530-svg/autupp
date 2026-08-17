@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Solo para el build debug (src/debug no se mezcla en release): permite HTTP
+    plano únicamente hacia el servidor de pruebas local en esta LAN, para poder
+    probar el ciclo completo sin tener aún el hosting HTTPS real (GitHub + VPS).
+    En producción todo va por HTTPS y esta excepción no existe.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.100.4</domain>
+    </domain-config>
+</network-security-config>

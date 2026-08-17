@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        Los APK descargados se guardan en context.cacheDir/apks/.
+        cache-path expone exactamente esa subcarpeta, nada más del cacheDir,
+        siguiendo el principio de mínimo privilegio del FileProvider.
+    -->
+    <cache-path name="apks" path="apks/" />
+</paths>

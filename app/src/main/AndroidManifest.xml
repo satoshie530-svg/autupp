@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Descarga del JSON de catálogo y de los APKs -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Requerido para poder lanzar el instalador del sistema (Android 8+) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!--
+        Sin este permiso, UninstallerActivity del sistema rechaza el Intent
+        ACTION_DELETE en silencio (sin lanzar excepción hacia nuestro código:
+        el rechazo pasa dentro del proceso del instalador del sistema) y
+        simplemente no muestra nada. Es un permiso "normal" (no peligroso):
+        se concede automáticamente en la instalación, sin diálogo runtime,
+        igual que REQUEST_INSTALL_PACKAGES.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!--
+        El catálogo de apps administradas ahora es 100% dinámico (lo define
+        catalog.json en tiempo de ejecución, no una lista fija compilada en la
+        app), así que no hay forma de declarar de antemano en <queries> qué
+        paquetes se van a consultar — <queries> exige nombres fijos en el
+        manifest. Por eso se usa QUERY_ALL_PACKAGES en su lugar.
+        Esto normalmente exige justificación y revisión manual en Play Store,
+        pero esta app se distribuye únicamente por sideload (GitHub + VPS
+        propio), nunca por Play Store, así que esa restricción no aplica aquí.
+    -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- Declarado explícito como app de TV. required=false permite además instalarla
+         en un móvil para pruebas, pero el launcher que se usa en la TV es el LEANBACK. -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <application
+        android:name=".TvAppManagerApplication"
+        android:allowBackup="false"
+        android:banner="@drawable/tv_banner"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TvAppManager"
+        tools:targetApi="34">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:theme="@style/Theme.TvAppManager">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <!-- LEANBACK_LAUNCHER es el equivalente a "launcher" pero para el
+                     home de Android TV; sin esto la app no aparecerá en la fila de apps. -->
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            FileProvider: única forma permitida desde Android 7+ (Nougat) de compartir un
+            APK guardado en almacenamiento privado (cacheDir) con el instalador del sistema.
+            Pasar un Uri file:// crudo lanza FileUriExposedException en API 24+.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>
