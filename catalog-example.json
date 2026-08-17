@@ -1,38 +1,14 @@
 {
   "banner": "Bienvenido. Si tienes problemas con alguna app, contáctanos por WhatsApp al +54 9 11 xxxx-xxxx.",
-  "managerApp": {
-    "versionCode": 2,
-    "versionName": "1.1.0",
-    "downloadUrl": "https://github.com/tuusuario/turepo/releases/download/manager-v1.1.0/administrador-de-apps.apk",
-    "changelog": "- Nuevos íconos por app\n- Mensajes de error más claros"
-  },
   "apps": [
     {
       "packageName": "com.tuempresa.app1",
       "appName": "App Uno",
-      "versionCode": 12,
-      "versionName": "1.2.0",
-      "downloadUrl": "https://github.com/tuusuario/turepo/releases/download/app1-v1.2.0/app1.apk",
-      "changelog": "- Corrige cierre inesperado al abrir ajustes\n- Mejora rendimiento en TV boxes de gama baja",
-      "iconUrl": "https://tuservidor.com/icons/app1.png"
-    },
-    {
-      "packageName": "com.tuempresa.app2",
-      "appName": "App Dos",
-      "versionCode": 5,
-      "versionName": "1.0.4",
-      "downloadUrl": "https://github.com/tuusuario/turepo/releases/download/app2-v1.0.4/app2.apk",
-      "changelog": "- Primera versión estable",
-      "iconUrl": "https://tuservidor.com/icons/app2.png"
-    },
-    {
-      "packageName": "com.tuempresa.app3",
-      "appName": "App Tres",
-      "versionCode": 20,
-      "versionName": "2.1.0",
-      "downloadUrl": "https://github.com/tuusuario/turepo/releases/download/app3-v2.1.0/app3.apk",
-      "changelog": "- Nuevo diseño de interfaz\n- Soporte para mando a distancia mejorado",
-      "iconUrl": "https://tuservidor.com/icons/app3.png"
+      "versionCode": 2,
+      "versionName": "1.1.0",
+      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/app1-v1.1.0/app1-v1.1.0.apk",
+      "changelog": "Actualizacion de prueba: cambia color y texto",
+      "iconUrl": null
     }
   ]
 }
