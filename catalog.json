@@ -3,34 +3,34 @@
   "whatsappNumber": "+54 9 11 xxxx-xxxx",
   "apps": [
     {
-      "packageName": "com.ejemplo.app1",
-      "appName": "Nombre de la app 1",
-      "versionCode": 1,
-      "versionName": "1.0.0",
-      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/appX-vY.Y.Y/appX-vY.Y.Y.apk",
-      "changelog": "Descripción de esta versión",
-      "iconUrl": null,
-      "sha256": null
+      "packageName": "tv.nodo7.internetdtv",
+      "appName": "INTERNET DEALERS TV",
+      "versionCode": 4,
+      "versionName": "2.0.1",
+      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/app3-v2.0.1/INTERNETDEALERSTV.apk",
+      "changelog": "Version inicial en el catalogo",
+      "iconUrl": "https://raw.githubusercontent.com/satoshie530-svg/autupp/main/assets/icons/internet-dealers-tv.png",
+      "sha256": "05DE09527FDAC0D4ED12DE5F2ADF5A59CE4A390BABC0328C793AC46B0C0ECA5E"
     },
     {
-      "packageName": "com.ejemplo.app2",
-      "appName": "Nombre de la app 2",
+      "packageName": "com.priv.tv",
+      "appName": "CENITV",
       "versionCode": 1,
-      "versionName": "1.0.0",
-      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/appX-vY.Y.Y/appX-vY.Y.Y.apk",
-      "changelog": "Descripción de esta versión",
-      "iconUrl": null,
-      "sha256": null
+      "versionName": "1.0",
+      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/app4-v1.0.0/CENITV.1.0.apk",
+      "changelog": "Version inicial en el catalogo",
+      "iconUrl": "https://raw.githubusercontent.com/satoshie530-svg/autupp/main/assets/icons/cenitv.png",
+      "sha256": "87C479AC7412CA9B9B2807DA344BE11352044692AB6BE66B2762CAA8C4B7545E"
     },
     {
-      "packageName": "com.ejemplo.app3",
-      "appName": "Nombre de la app 3",
-      "versionCode": 1,
-      "versionName": "1.0.0",
-      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/appX-vY.Y.Y/appX-vY.Y.Y.apk",
-      "changelog": "Descripción de esta versión",
-      "iconUrl": null,
-      "sha256": null
+      "packageName": "com.skidush.clonex",
+      "appName": "LUMIX TV",
+      "versionCode": 58,
+      "versionName": "5.4.1",
+      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/app2-v5.4.1/lumix-tv-release-v5.4.1.apk",
+      "changelog": "Mejoras en estabilidad",
+      "iconUrl": "https://raw.githubusercontent.com/satoshie530-svg/autupp/main/assets/icons/lumix-tv.png",
+      "sha256": "FDFB4F16D2366808B130DD917777BC2672770BD8B1481F053FBF3F4DE456693D"
     }
   ],
   "featured": [
