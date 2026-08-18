@@ -3,9 +3,7 @@ package com.privatestore.tvmanager.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -89,27 +87,5 @@ fun ClockGlyph(tint: Color, modifier: Modifier = Modifier) {
             strokeWidth = strokeW,
             cap = StrokeCap.Round
         )
-    }
-}
-
-@Composable
-fun ChatGlyph(tint: Color, modifier: Modifier = Modifier) {
-    Canvas(modifier = modifier) {
-        val w = size.width
-        val h = size.height
-        val bubbleHeight = h * 0.74f
-        drawRoundRect(
-            color = tint,
-            topLeft = Offset.Zero,
-            size = Size(w, bubbleHeight),
-            cornerRadius = CornerRadius(w * 0.3f, w * 0.3f)
-        )
-        val tail = Path().apply {
-            moveTo(w * 0.24f, bubbleHeight - 1f)
-            lineTo(w * 0.16f, h)
-            lineTo(w * 0.44f, bubbleHeight - 1f)
-            close()
-        }
-        drawPath(tail, color = tint)
     }
 }

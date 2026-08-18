@@ -1,7 +1,5 @@
 package com.privatestore.tvmanager.ui
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,11 +42,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
-import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.IconButton
 import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.privatestore.tvmanager.data.model.FeaturedItem
@@ -65,7 +61,6 @@ fun TvAppManagerApp(viewModel: AppManagerViewModel = viewModel()) {
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val catalogError by viewModel.catalogError.collectAsState()
     val banner by viewModel.banner.collectAsState()
-    val whatsappNumber by viewModel.whatsappNumber.collectAsState()
     val featured by viewModel.featured.collectAsState()
     val managerUpdateState by viewModel.managerUpdateState.collectAsState()
 
@@ -84,8 +79,8 @@ fun TvAppManagerApp(viewModel: AppManagerViewModel = viewModel()) {
                 AppHeader(isRefreshing = isRefreshing, onRefresh = viewModel::refreshCatalog)
                 Spacer(Modifier.height(6.dp))
 
-                if (!banner.isNullOrBlank() || !whatsappNumber.isNullOrBlank()) {
-                    WelcomeBanner(message = banner, whatsappNumber = whatsappNumber)
+                if (!banner.isNullOrBlank()) {
+                    WelcomeBanner(message = banner)
                     Spacer(Modifier.height(6.dp))
                 }
 
@@ -255,8 +250,7 @@ private fun SectionHeader(title: String, subtitle: String) {
 }
 
 @Composable
-private fun WelcomeBanner(message: String?, whatsappNumber: String?) {
-    val context = LocalContext.current
+private fun WelcomeBanner(message: String?) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -286,50 +280,7 @@ private fun WelcomeBanner(message: String?, whatsappNumber: String?) {
                 )
             }
         }
-        if (!whatsappNumber.isNullOrBlank()) {
-            Surface(
-                onClick = { openWhatsapp(context, whatsappNumber) },
-                shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(12.dp)),
-                colors = ClickableSurfaceDefaults.colors(
-                    containerColor = Color.Transparent,
-                    contentColor = TvAppManagerColors.OnSurface,
-                    focusedContainerColor = TvAppManagerColors.Whatsapp.copy(alpha = 0.14f),
-                    focusedContentColor = TvAppManagerColors.OnSurface
-                )
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clip(CircleShape)
-                            .background(TvAppManagerColors.Whatsapp.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        ChatGlyph(tint = TvAppManagerColors.Whatsapp, modifier = Modifier.size(14.dp))
-                    }
-                    Column(modifier = Modifier.padding(start = 8.dp)) {
-                        Text(text = whatsappNumber, style = MaterialTheme.typography.labelLarge, color = TvAppManagerColors.OnSurface)
-                        Text(
-                            text = "Escribinos por WhatsApp",
-                            fontSize = 11.sp,
-                            color = TvAppManagerColors.OnSurfaceVariant
-                        )
-                    }
-                }
-            }
-        }
     }
-}
-
-private fun openWhatsapp(context: android.content.Context, number: String) {
-    val digits = number.filter { it.isDigit() }
-    if (digits.isEmpty()) return
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$digits"))
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    runCatching { context.startActivity(intent) }
 }
 
 @Composable

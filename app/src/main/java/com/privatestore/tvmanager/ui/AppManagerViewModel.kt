@@ -17,10 +17,13 @@ import com.privatestore.tvmanager.util.PackageUtils
 import com.privatestore.tvmanager.util.PermissionUtils
 import com.privatestore.tvmanager.util.UninstallManager
 import com.privatestore.tvmanager.util.toUserMessage
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+private const val AUTO_REFRESH_INTERVAL_MS = 30 * 60 * 1000L // 30 minutos
 
 class AppManagerViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -37,9 +40,6 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
 
     private val _banner = MutableStateFlow(lastCatalog?.banner)
     val banner: StateFlow<String?> = _banner.asStateFlow()
-
-    private val _whatsappNumber = MutableStateFlow(lastCatalog?.whatsappNumber)
-    val whatsappNumber: StateFlow<String?> = _whatsappNumber.asStateFlow()
 
     private val _featured = MutableStateFlow(lastCatalog?.featured.orEmpty())
     val featured: StateFlow<List<FeaturedItem>> = _featured.asStateFlow()
@@ -68,6 +68,23 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
 
     init {
         refreshCatalog()
+        startPeriodicRefresh()
+    }
+
+    /**
+     * Antes el catálogo remoto solo se revisaba al abrir la app o al tocar el
+     * botón de refrescar: si el usuario dejaba el Administrador abierto (o el TV
+     * box lo mantenía en memoria) podía tardar horas en enterarse de una
+     * actualización nueva. Este loop reintenta solo, sin bloquear la UI ni pedir
+     * nada al usuario.
+     */
+    private fun startPeriodicRefresh() {
+        viewModelScope.launch {
+            while (true) {
+                delay(AUTO_REFRESH_INTERVAL_MS)
+                refreshCatalog()
+            }
+        }
     }
 
     fun refreshCatalog() {
@@ -95,11 +112,14 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     /** Llamar desde Activity.onResume(): el usuario puede volver de Ajustes o del
-     *  instalador/desinstalador del sistema, así que hay que releer el estado real. */
+     *  instalador/desinstalador del sistema, así que hay que releer el estado real.
+     *  También reconsulta el catálogo remoto (no solo el estado local): volver a
+     *  la app es una señal natural de "puede que haya algo nuevo", igual que
+     *  refrescar a mano. */
     fun onActivityResumed() {
         _hasInstallPermission.value =
             PermissionUtils.canRequestPackageInstalls(getApplication())
-        refreshLocalStates()
+        refreshCatalog()
 
         val pending = pendingCleanInstallPackage
         if (pending != null) {
@@ -229,7 +249,6 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
         val previousStates = _uiState.value
         _uiState.value = repository.buildLocalStates(lastCatalog)
         _banner.value = lastCatalog?.banner
-        _whatsappNumber.value = lastCatalog?.whatsappNumber
         _featured.value = lastCatalog?.featured.orEmpty()
         syncCacheAndNotifications(previousStates, _uiState.value)
     }

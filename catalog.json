@@ -1,10 +1,16 @@
 {
-  "banner": "Si tienes problemas con alguna app, contáctanos por WhatsApp.",
-  "whatsappNumber": "+54 9 11 xxxx-xxxx",
+  "banner": "Si tienes problemas con alguna app, contáctanos por WhatsApp al +54 9 11 xxxx-xxxx.",
+  "managerApp": {
+    "versionCode": 3,
+    "versionName": "1.1.1",
+    "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/manager-v1.1.1/tvdigitalupdates-v1.1.1.apk",
+    "changelog": "Rediseno de UI, iconos de apps, refresco automatico y prueba de auto-actualizacion",
+    "sha256": "8A090148E3686D99E344DB2365903A0AF563E6F842AD6CC4B68F02A3D473F7EE"
+  },
   "apps": [
     {
       "packageName": "tv.nodo7.internetdtv",
-      "appName": "INTERNET DEALERS TV",
+      "appName": "DEALERS TV",
       "versionCode": 4,
       "versionName": "2.0.1",
       "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/app3-v2.0.1/INTERNETDEALERSTV.apk",

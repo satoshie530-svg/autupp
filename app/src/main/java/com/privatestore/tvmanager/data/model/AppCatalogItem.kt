@@ -57,6 +57,5 @@ data class AppCatalogResponse(
     val apps: List<AppCatalogItem>,
     val banner: String? = null,
     val managerApp: ManagerAppInfo? = null,
-    val whatsappNumber: String? = null,
     val featured: List<FeaturedItem> = emptyList()
 )

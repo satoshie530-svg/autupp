@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Flecha de descarga hacia una bandeja: instalar/actualizar apps. -->
+<!-- Triángulo de play blanco, igual al logo circular del header dentro de la app. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#4C8DFF"
-        android:pathData="M48,24 L60,24 L60,54 L70,54 L54,74 L38,54 L48,54 Z" />
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#4C8DFF"
-        android:strokeWidth="7"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M28,80 L28,88 Q28,92 32,92 L76,92 Q80,92 80,88 L80,80" />
+        android:fillColor="#FFFFFF"
+        android:pathData="M43,35 L43,73 L76,54 Z" />
 </vector>
