@@ -1,14 +1,59 @@
 {
-  "banner": "Bienvenido. Si tienes problemas con alguna app, contáctanos por WhatsApp al +54 9 11 xxxx-xxxx.",
+  "banner": "Si tienes problemas con alguna app, contáctanos por WhatsApp.",
+  "whatsappNumber": "+54 9 11 xxxx-xxxx",
   "apps": [
     {
-      "packageName": "com.tuempresa.app1",
-      "appName": "App Uno",
-      "versionCode": 2,
-      "versionName": "1.1.0",
-      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/app1-v1.1.0/app1-v1.1.0.apk",
-      "changelog": "Actualizacion de prueba: cambia color y texto",
-      "iconUrl": null
+      "packageName": "com.ejemplo.app1",
+      "appName": "Nombre de la app 1",
+      "versionCode": 1,
+      "versionName": "1.0.0",
+      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/appX-vY.Y.Y/appX-vY.Y.Y.apk",
+      "changelog": "Descripción de esta versión",
+      "iconUrl": null,
+      "sha256": null
+    },
+    {
+      "packageName": "com.ejemplo.app2",
+      "appName": "Nombre de la app 2",
+      "versionCode": 1,
+      "versionName": "1.0.0",
+      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/appX-vY.Y.Y/appX-vY.Y.Y.apk",
+      "changelog": "Descripción de esta versión",
+      "iconUrl": null,
+      "sha256": null
+    },
+    {
+      "packageName": "com.ejemplo.app3",
+      "appName": "Nombre de la app 3",
+      "versionCode": 1,
+      "versionName": "1.0.0",
+      "downloadUrl": "https://github.com/satoshie530-svg/autupp/releases/download/appX-vY.Y.Y/appX-vY.Y.Y.apk",
+      "changelog": "Descripción de esta versión",
+      "iconUrl": null,
+      "sha256": null
+    }
+  ],
+  "featured": [
+    {
+      "title": "Título de la tarjeta 1",
+      "imageUrl": "https://ejemplo.com/imagenes/destacado1.jpg",
+      "dateLabel": "DOM\n18\nMAY",
+      "timeLabel": "Domingo 18:30 hs",
+      "tag": "ESPN"
+    },
+    {
+      "title": "Título de la tarjeta 2",
+      "imageUrl": "https://ejemplo.com/imagenes/destacado2.jpg",
+      "dateLabel": "DOM\n18\nMAY",
+      "timeLabel": "Domingo 11:00 hs",
+      "tag": "ESPN2"
+    },
+    {
+      "title": "Título de la tarjeta 3",
+      "imageUrl": "https://ejemplo.com/imagenes/destacado3.jpg",
+      "dateLabel": "MAR\n20\nMAY",
+      "timeLabel": "Martes 16:00 hs",
+      "tag": "TNT SPORTS"
     }
   ]
 }

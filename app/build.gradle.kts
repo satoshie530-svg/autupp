@@ -1,7 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.serialization")
+}
+
+// Credenciales de firma de release: viven FUERA del repo (nunca se commitean) en
+// C:\Users\chris\android-signing\keystore.properties, generado una sola vez con
+// keytool. Si el archivo no está (ej. clon nuevo en otra máquina), assembleRelease
+// simplemente queda sin firmar en vez de romper el build de debug.
+val keystorePropertiesFile = file("C:\\Users\\chris\\android-signing\\keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
 }
 
 android {
@@ -17,10 +30,24 @@ android {
         versionName = "1.0.0"
     }
 
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
@@ -53,6 +80,10 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    // Solo el set chico (Delete/PlayArrow/Refresh/Settings, que ya usamos): la
+    // variante "-extended" agrega miles de clases por unos pocos glifos que ni
+    // siquiera necesitamos, y eso alargaba el arranque en frío en la TV.
+    implementation("androidx.compose.material:material-icons-core")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     // Carga de íconos remotos (iconUrl del catálogo).
@@ -74,4 +105,10 @@ dependencies {
 
     // Core
     implementation("androidx.core:core-ktx:1.13.1")
+
+    // Deja que Android instale los "baseline profiles" que Compose/Material3 ya
+    // traen empaquetados en sus propios .aar: evita que las primeras corridas se
+    // ejecuten interpretadas (sin AOT) en vez de compiladas, que es buena parte
+    // del arranque en frío lento en fierros modestos como esta TV box.
+    implementation("androidx.profileinstaller:profileinstaller:1.3.1")
 }

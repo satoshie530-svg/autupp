@@ -12,20 +12,42 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Button
+import androidx.tv.material3.ButtonDefaults
+import androidx.tv.material3.ClickableSurfaceDefaults
+import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
+import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.privatestore.tvmanager.data.model.AppStatus
 import com.privatestore.tvmanager.data.model.AppUiState
+import kotlin.math.abs
+
+/** Ancho fijo de tarjeta pensado para que entren 4 por fila en un TV 1080p
+ *  (960dp lógicos de ancho) sin necesitar scroll horizontal. */
+val AppCardWidth = 205.dp
 
 @Composable
 fun AppCard(
@@ -47,33 +69,45 @@ fun AppCard(
         status is AppStatus.Installing ||
         status is AppStatus.CheckingUpdate
 
-    // Antes esto era un androidx.tv.material3.Card con su propio onClick: al ser
-    // ÉL MISMO un objetivo de foco/click independiente de los botones que
-    // contiene adentro, el D-pad nunca entraba a los botones internos (todo el
-    // centro del control disparaba la acción de la card) — "Desinstalar" quedaba
-    // inalcanzable. focusGroup() en un contenedor no-clickeable deja que cada
-    // botón sea su propio destino de navegación, como corresponde en TV.
-    // El borde es fijo (no depende del foco) para que las tarjetas se lean como
-    // piezas separadas incluso cuando ninguna tiene el foco todavía.
+    // Igual que antes: Column + focusGroup() sin onClick propio, para que el D-pad
+    // navegue directo a los botones internos en vez de que la tarjeta entera
+    // compita por el foco (ver historial: eso dejaba "Desinstalar" inalcanzable).
+    // onFocusChanged detecta cuando el foco entra a CUALQUIER hijo (hasFocus
+    // también es true para el contenedor cuando un descendiente lo tiene) para
+    // dibujar el borde de foco alrededor de toda la tarjeta, no de un botón suelto.
+    var hasFocusWithin by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
-            .width(300.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .width(AppCardWidth)
+            .clip(RoundedCornerShape(16.dp))
             .background(TvAppManagerColors.Surface)
-            .border(1.dp, TvAppManagerColors.CardBorder, RoundedCornerShape(12.dp))
+            .border(
+                width = if (hasFocusWithin) 2.dp else 1.dp,
+                color = if (hasFocusWithin) TvAppManagerColors.Primary else TvAppManagerColors.CardBorder,
+                shape = RoundedCornerShape(16.dp)
+            )
             .focusGroup()
-            .padding(20.dp)
+            .onFocusChanged { hasFocusWithin = it.hasFocus }
+            .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AppIcon(iconUrl = state.iconUrl, displayName = state.displayName, modifier = Modifier.size(48.dp))
-            Text(
-                text = state.displayName,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(start = 12.dp)
+            AppIcon(
+                iconUrl = state.iconUrl,
+                displayName = state.displayName,
+                packageName = state.packageName,
+                modifier = Modifier.size(38.dp)
             )
+            Column(modifier = Modifier.padding(start = 10.dp)) {
+                Text(
+                    text = state.displayName,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = TvAppManagerColors.OnSurface,
+                    maxLines = 1
+                )
+                StatusLabel(status)
+            }
         }
-
-        StatusLabel(status)
 
         when (status) {
             is AppStatus.Downloading -> LinearProgressIndicator(
@@ -101,34 +135,28 @@ fun AppCard(
         }
 
         if (!isBusy) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Column(modifier = Modifier.padding(top = 10.dp)) {
                 when (status) {
-                    is AppStatus.NotInstalled -> ActionButton("Instalar", onInstall)
-                    is AppStatus.UpdateAvailable -> ActionButton("Actualizar", onUpdate)
+                    is AppStatus.NotInstalled -> PrimaryActionButton("Instalar", Icons.Filled.PlayArrow, onInstall, useDownloadGlyph = true)
+                    is AppStatus.UpdateAvailable -> PrimaryActionButton("Actualizar", Icons.Filled.PlayArrow, onUpdate, useDownloadGlyph = true)
                     // Corto a propósito ("Instalar" alcanza, el detalle ya está en
-                    // StatusLabel arriba): con "Instalar actualización" completo,
-                    // "Desinstalar" no entraba en la fila y se cortaba a "Desinst".
-                    is AppStatus.ReadyToInstall -> ActionButton("Instalar", onUpdate)
-                    is AppStatus.UpToDate -> ActionButton("Abrir", onOpen)
-                    is AppStatus.Error -> ActionButton("Reintentar", onInstall)
+                    // StatusLabel arriba).
+                    is AppStatus.ReadyToInstall -> PrimaryActionButton("Instalar", Icons.Filled.PlayArrow, onUpdate, useDownloadGlyph = true)
+                    is AppStatus.UpToDate -> PrimaryActionButton("Abrir", Icons.Filled.PlayArrow, onOpen)
+                    is AppStatus.Error -> PrimaryActionButton("Reintentar", Icons.Filled.Refresh, onInstall)
                     else -> Unit
                 }
 
                 if (state.installedInfo != null) {
-                    ActionButton("Desinstalar", onUninstall)
-                }
-            }
-
-            // Siempre disponible mientras esté instalada, no solo tras un error:
-            // es la forma de forzar un reinicio limpio ante cualquier problema.
-            if (state.installedInfo != null) {
-                Row(modifier = Modifier.padding(top = 8.dp)) {
-                    ActionButton("Instalación limpia", onCleanInstall)
+                    Column(modifier = Modifier.padding(top = 6.dp)) {
+                        SecondaryActionButton("Desinstalar", Icons.Filled.Delete, onUninstall)
+                        // Siempre disponible mientras esté instalada, no solo tras un
+                        // error: es la forma de forzar un reinicio limpio ante
+                        // cualquier problema.
+                        Box(modifier = Modifier.padding(top = 6.dp)) {
+                            CleanInstallRow(onCleanInstall)
+                        }
+                    }
                 }
             }
         }
@@ -136,19 +164,20 @@ fun AppCard(
 }
 
 @Composable
-private fun AppIcon(iconUrl: String?, displayName: String, modifier: Modifier = Modifier) {
+private fun AppIcon(iconUrl: String?, displayName: String, packageName: String, modifier: Modifier = Modifier) {
+    val accent = TvAppManagerColors.IconAccents[abs(packageName.hashCode()) % TvAppManagerColors.IconAccents.size]
     // La letra de respaldo queda dibujada siempre, debajo; si iconUrl carga bien,
     // AsyncImage la tapa por completo. Si falla o sigue cargando, AsyncImage no
     // dibuja nada (comportamiento por defecto de Coil sin placeholder/error), así
     // que la letra sigue visible. Evita depender de un drawable de fallback propio.
-    Box(modifier = modifier.clip(RoundedCornerShape(10.dp))) {
+    Box(modifier = modifier.clip(RoundedCornerShape(11.dp))) {
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .background(TvAppManagerColors.SurfaceVariant),
+                .background(accent),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = displayName.take(1).uppercase(), color = TvAppManagerColors.Primary)
+            Text(text = displayName.take(1).uppercase(), color = Color.White, style = MaterialTheme.typography.titleMedium)
         }
         if (iconUrl != null) {
             AsyncImage(
@@ -162,38 +191,118 @@ private fun AppIcon(iconUrl: String?, displayName: String, modifier: Modifier = 
 }
 
 @Composable
-private fun ActionButton(text: String, onClick: () -> Unit) {
-    Button(onClick = onClick, modifier = Modifier.height(40.dp)) {
-        Text(text = text)
+private fun PrimaryActionButton(
+    text: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    useDownloadGlyph: Boolean = false
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(34.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp),
+        colors = ButtonDefaults.colors(
+            containerColor = TvAppManagerColors.Primary,
+            contentColor = TvAppManagerColors.OnPrimary,
+            focusedContainerColor = TvAppManagerColors.Primary,
+            focusedContentColor = TvAppManagerColors.OnPrimary
+        )
+    ) {
+        if (useDownloadGlyph) {
+            DownloadGlyph(tint = TvAppManagerColors.OnPrimary, modifier = Modifier.size(13.dp))
+        } else {
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(14.dp))
+        }
+        Text(text = text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
     }
 }
 
 @Composable
-private fun StatusLabel(status: AppStatus) {
-    val text = when (status) {
-        is AppStatus.NotInstalled -> "No instalada"
-        is AppStatus.UpToDate -> "Instalada · v${status.installedVersionName}"
-        is AppStatus.UpdateAvailable ->
-            "Actualización disponible: v${status.installedVersionName} → v${status.remoteVersionName}"
-        is AppStatus.AutoDownloading ->
-            "Descargando v${status.remoteVersionName} en 2do plano… ${status.progress}%"
-        is AppStatus.ReadyToInstall ->
-            "Actualización v${status.remoteVersionName} lista para instalar"
-        is AppStatus.CheckingUpdate -> "Buscando actualizaciones…"
-        is AppStatus.UninstallPending -> "Esperando confirmación de desinstalación…"
-        is AppStatus.Downloading ->
-            if (status.isCleanReinstall) {
-                "Reinstalando (instalación limpia)… ${status.progress}%"
-            } else {
-                "Descargando… ${status.progress}%"
-            }
-        is AppStatus.Installing ->
-            if (status.isCleanReinstall) {
-                "Descarga lista, confirma la reinstalación limpia"
-            } else {
-                "Esperando confirmación de instalación"
-            }
-        is AppStatus.Error -> "Error: ${status.message}"
+private fun SecondaryActionButton(text: String, icon: ImageVector, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().height(34.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp),
+        colors = ButtonDefaults.colors(
+            containerColor = TvAppManagerColors.SurfaceVariant,
+            contentColor = TvAppManagerColors.OnSurface,
+            focusedContainerColor = TvAppManagerColors.OnSurfaceVariant,
+            focusedContentColor = Color.White
+        )
+    ) {
+        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(14.dp))
+        Text(text = text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
     }
-    Text(text = text, modifier = Modifier.padding(top = 4.dp))
+}
+
+@Composable
+private fun CleanInstallRow(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(10.dp)),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = TvAppManagerColors.SurfaceVariant,
+            contentColor = TvAppManagerColors.OnSurface,
+            focusedContainerColor = TvAppManagerColors.Primary,
+            focusedContentColor = TvAppManagerColors.OnPrimary
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp)
+        ) {
+            Icon(imageVector = Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(13.dp))
+            Text(
+                text = "Instalación limpia",
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier.padding(start = 8.dp).weight(1f)
+            )
+            ChevronRightGlyph(tint = TvAppManagerColors.OnSurface, modifier = Modifier.size(14.dp))
+        }
+    }
+}
+
+private data class StatusLabelInfo(val label: String, val versionPrefix: String?, val dotColor: Color)
+
+@Composable
+private fun StatusLabel(status: AppStatus) {
+    val info = when (status) {
+        is AppStatus.NotInstalled -> StatusLabelInfo("No instalada", null, TvAppManagerColors.OnSurfaceVariant)
+        is AppStatus.UpToDate -> StatusLabelInfo("Instalada", "v${status.installedVersionName}", TvAppManagerColors.Success)
+        is AppStatus.UpdateAvailable -> StatusLabelInfo(
+            "Actualización disponible",
+            "v${status.installedVersionName} → v${status.remoteVersionName}",
+            Color(0xFFF59E0B)
+        )
+        is AppStatus.AutoDownloading -> StatusLabelInfo(
+            "Descargando ${status.progress}%",
+            "v${status.remoteVersionName}",
+            Color(0xFFF59E0B)
+        )
+        is AppStatus.ReadyToInstall -> StatusLabelInfo("Lista para instalar", "v${status.remoteVersionName}", Color(0xFFF59E0B))
+        is AppStatus.CheckingUpdate -> StatusLabelInfo("Buscando actualizaciones…", null, TvAppManagerColors.OnSurfaceVariant)
+        is AppStatus.UninstallPending -> StatusLabelInfo("Esperando confirmación…", null, TvAppManagerColors.OnSurfaceVariant)
+        is AppStatus.Downloading -> StatusLabelInfo(
+            if (status.isCleanReinstall) "Reinstalando ${status.progress}%" else "Descargando ${status.progress}%",
+            null,
+            TvAppManagerColors.Primary
+        )
+        is AppStatus.Installing -> StatusLabelInfo(
+            if (status.isCleanReinstall) "Confirma la reinstalación" else "Esperando confirmación",
+            null,
+            TvAppManagerColors.Primary
+        )
+        is AppStatus.Error -> StatusLabelInfo("Error: ${status.message}", null, TvAppManagerColors.Error)
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
+        if (info.versionPrefix != null) {
+            Text(text = info.versionPrefix, color = TvAppManagerColors.OnSurfaceVariant, fontSize = 11.sp)
+            Box(modifier = Modifier.padding(horizontal = 5.dp).size(5.dp).clip(CircleShape).background(info.dotColor))
+        } else {
+            Box(modifier = Modifier.padding(end = 5.dp).size(5.dp).clip(CircleShape).background(info.dotColor))
+        }
+        Text(text = info.label, color = TvAppManagerColors.OnSurfaceVariant, fontSize = 11.sp, maxLines = 1)
+    }
 }

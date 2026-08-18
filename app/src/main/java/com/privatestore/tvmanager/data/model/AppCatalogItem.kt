@@ -35,9 +35,28 @@ data class ManagerAppInfo(
     val sha256: String? = null
 )
 
+/**
+ * Tarjeta informativa/promocional para la fila "Información destacada" del
+ * inicio (deportes, estrenos, avisos, lo que sea). 100% controlada desde el
+ * catálogo remoto, igual que la lista de apps: agregar/quitar una es solo
+ * editar el JSON, no requiere una nueva versión de la app.
+ */
+@Serializable
+data class FeaturedItem(
+    val title: String,
+    val imageUrl: String,
+    // Texto libre para la insignia superior (día/número/mes); admite "\n"
+    // para partirlo en varias líneas, ej. "DOM\n18\nMAY".
+    val dateLabel: String? = null,
+    val timeLabel: String? = null,
+    val tag: String? = null
+)
+
 @Serializable
 data class AppCatalogResponse(
     val apps: List<AppCatalogItem>,
     val banner: String? = null,
-    val managerApp: ManagerAppInfo? = null
+    val managerApp: ManagerAppInfo? = null,
+    val whatsappNumber: String? = null,
+    val featured: List<FeaturedItem> = emptyList()
 )

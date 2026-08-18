@@ -8,6 +8,7 @@ import com.privatestore.tvmanager.data.AppCatalogRepository
 import com.privatestore.tvmanager.data.model.AppCatalogResponse
 import com.privatestore.tvmanager.data.model.AppStatus
 import com.privatestore.tvmanager.data.model.AppUiState
+import com.privatestore.tvmanager.data.model.FeaturedItem
 import com.privatestore.tvmanager.data.model.ManagerUpdateState
 import com.privatestore.tvmanager.util.DownloadEvent
 import com.privatestore.tvmanager.util.InstallManager
@@ -36,6 +37,12 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
 
     private val _banner = MutableStateFlow(lastCatalog?.banner)
     val banner: StateFlow<String?> = _banner.asStateFlow()
+
+    private val _whatsappNumber = MutableStateFlow(lastCatalog?.whatsappNumber)
+    val whatsappNumber: StateFlow<String?> = _whatsappNumber.asStateFlow()
+
+    private val _featured = MutableStateFlow(lastCatalog?.featured.orEmpty())
+    val featured: StateFlow<List<FeaturedItem>> = _featured.asStateFlow()
 
     private val _managerUpdateState = MutableStateFlow<ManagerUpdateState>(ManagerUpdateState.UpToDate)
     val managerUpdateState: StateFlow<ManagerUpdateState> = _managerUpdateState.asStateFlow()
@@ -222,6 +229,8 @@ class AppManagerViewModel(application: Application) : AndroidViewModel(applicati
         val previousStates = _uiState.value
         _uiState.value = repository.buildLocalStates(lastCatalog)
         _banner.value = lastCatalog?.banner
+        _whatsappNumber.value = lastCatalog?.whatsappNumber
+        _featured.value = lastCatalog?.featured.orEmpty()
         syncCacheAndNotifications(previousStates, _uiState.value)
     }
 

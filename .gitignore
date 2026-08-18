@@ -10,3 +10,9 @@
 .cxx
 local.properties
 .claude/
+
+# Firma de release: nunca debe vivir en el repo. Se genera y guarda fuera de
+# esta carpeta (C:\Users\chris\android-signing\), esto es solo por las dudas.
+*.jks
+*.keystore
+keystore.properties

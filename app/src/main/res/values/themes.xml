@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.TvAppManager" parent="android:Theme.DeviceDefault">
-        <item name="android:colorBackground">#0B1120</item>
+    <style name="Theme.TvAppManager" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:colorBackground">#C9D8F5</item>
     </style>
 </resources>
