@@ -41,25 +41,17 @@
   ],
   "featured": [
     {
-      "title": "Título de la tarjeta 1",
-      "imageUrl": "https://ejemplo.com/imagenes/destacado1.jpg",
-      "dateLabel": "DOM\n18\nMAY",
-      "timeLabel": "Domingo 18:30 hs",
-      "tag": "ESPN"
+      "title": "",
+      "imageUrl": "https://raw.githubusercontent.com/satoshie530-svg/autupp/main/assets/featured/roku-dealerstv.png"
     },
     {
-      "title": "Título de la tarjeta 2",
-      "imageUrl": "https://ejemplo.com/imagenes/destacado2.jpg",
-      "dateLabel": "DOM\n18\nMAY",
-      "timeLabel": "Domingo 11:00 hs",
-      "tag": "ESPN2"
+      "title": "",
+      "imageUrl": "https://raw.githubusercontent.com/satoshie530-svg/autupp/main/assets/featured/referidos.png"
     },
     {
-      "title": "Título de la tarjeta 3",
-      "imageUrl": "https://ejemplo.com/imagenes/destacado3.jpg",
-      "dateLabel": "MAR\n20\nMAY",
-      "timeLabel": "Martes 16:00 hs",
-      "tag": "TNT SPORTS"
+      "title": "",
+      "imageUrl": "https://raw.githubusercontent.com/satoshie530-svg/autupp/main/assets/featured/boca-river.png",
+      "tag": "SUPERCLÁSICO"
     }
   ]
 }
