@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Panel — TV Digital Updates</title>
+<style>
+  :root{
+    --bg:#eef2fc; --card:#fff; --border:#e2e8f5; --ink:#16213e; --muted:#7b8499;
+    --blue:#2563eb; --navy:#101b3d; --green:#16a34a; --red:#ef4444; --amber:#d97706;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; font-family:system-ui,'Segoe UI',Roboto,sans-serif}
+  body{background:var(--bg); color:var(--ink); padding-bottom:90px}
+  header{position:sticky; top:0; z-index:10; background:var(--navy); color:#fff; padding:12px 18px; display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  header .logo{width:34px;height:34px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:15px}
+  header h1{font-size:16px} header h1 small{display:block;font-size:10px;font-weight:400;color:#98a1bc}
+  header .grow{flex:1}
+  .btn{border:0; border-radius:9px; padding:9px 15px; font-size:13px; font-weight:600; cursor:pointer; background:#e8edfa; color:var(--ink); text-decoration:none; display:inline-block}
+  .btn:hover{filter:brightness(.95)} .btn:disabled{opacity:.45; cursor:default}
+  .btn.primary{background:var(--blue); color:#fff}
+  .btn.big{padding:13px 20px; font-size:15px}
+  .btn.ghost{background:rgba(255,255,255,.12); color:#fff}
+  .btn.mini{padding:5px 9px; font-size:11px; border-radius:7px}
+  .btn.danger{background:#fdeaea; color:var(--red)}
+  main{max-width:1060px; margin:20px auto; padding:0 16px; display:flex; flex-direction:column; gap:16px}
+  section{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 18px}
+  section>h2{font-size:13px; letter-spacing:.4px; text-transform:uppercase; color:var(--blue); display:flex; align-items:center; gap:8px; margin-bottom:4px}
+  section>p.hint{font-size:11.5px; color:var(--muted); margin-bottom:10px; line-height:1.45}
+  .item{border:1px solid var(--border); border-radius:11px; padding:12px; margin-top:10px; background:#fbfcff}
+  .item .rowtop{display:flex; justify-content:flex-end; gap:6px; margin-bottom:6px}
+  .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:9px}
+  label.f{display:flex; flex-direction:column; gap:3px; font-size:11px; font-weight:600; color:var(--muted); min-width:0}
+  label.f input, label.f textarea{border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:13px; color:var(--ink); background:#fff; width:100%; min-width:0}
+  label.f textarea{resize:vertical; min-height:38px}
+  label.f input:focus, label.f textarea:focus{outline:2px solid var(--blue); outline-offset:0; border-color:transparent}
+  .imgrow{display:flex; gap:6px; align-items:center}
+  .imgrow img{width:36px; height:36px; border-radius:8px; object-fit:cover; background:#e8edfa; flex:none}
+  .c2{grid-column:span 2}.c3{grid-column:span 3}.c4{grid-column:span 4}.c6{grid-column:span 6}.c8{grid-column:span 8}.c12{grid-column:span 12}
+  @media(max-width:700px){.c2,.c3,.c4,.c6,.c8{grid-column:span 12} header h1 small{display:none}}
+  .addrow{margin-top:12px; display:flex; gap:8px; flex-wrap:wrap}
+  footer.bar{position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--border); padding:12px 18px; display:flex; gap:10px; align-items:center; z-index:10}
+  footer.bar .status{font-size:12px; color:var(--muted); flex:1}
+  .pill{display:inline-block; font-size:10px; font-weight:700; border-radius:20px; padding:2px 9px; margin-left:6px; vertical-align:middle; background:#e8f7ee; color:var(--green)}
+  .pill.warn{background:#fdf3e3; color:var(--amber)}
+  .note{background:#f3f7ff; border:1px solid #dbe6fb; border-radius:10px; padding:10px 12px; font-size:12px; color:#3d4a68; line-height:1.5}
+  .uploadbox{border:2px dashed #b9c8ee; border-radius:12px; padding:14px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:#f7f9ff; margin-bottom:4px}
+  .uploadbox p{font-size:12px; color:var(--muted); flex:1; min-width:200px; line-height:1.45}
+  details.adv summary{cursor:pointer; font-size:12px; font-weight:700; color:var(--muted); padding:4px 0}
+  input.invalid{outline:2px solid var(--red)!important}
+
+  .overlay{position:fixed; inset:0; background:rgba(16,27,61,.55); z-index:50; display:flex; align-items:center; justify-content:center; padding:16px}
+  .overlay.hidden{display:none}
+  .dialog{background:#fff; border-radius:16px; padding:22px; width:100%; max-width:440px; max-height:92vh; overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  .dialog.wide{max-width:560px}
+  .dialog h3{font-size:17px; margin-bottom:12px}
+  .dialog .actions{display:flex; justify-content:flex-end; gap:8px; margin-top:16px}
+  .dialog input[type=password]{width:100%; border:1px solid var(--border); border-radius:9px; padding:11px; font-size:15px; margin:10px 0}
+  .err{color:var(--red); font-size:12px; min-height:16px}
+  .apkhead{display:flex; gap:14px; align-items:flex-start}
+  .iconbox{width:84px; height:84px; border-radius:18px; background:#e8edfa; flex:none; overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--muted); text-align:center}
+  .iconbox img{width:100%; height:100%; object-fit:cover}
+  .facts{font-size:12px; color:#3d4a68; line-height:1.7; flex:1; min-width:0; word-break:break-all}
+  .facts b{color:var(--ink)}
+  .line{font-size:12px; border-radius:9px; padding:8px 10px; margin-top:10px; line-height:1.45}
+  .line.ok{background:#e8f7ee; color:#14532d} .line.warn{background:#fdf3e3; color:#7c4a03} .line.bad{background:#fdeaea; color:#7f1d1d}
+  .progress{height:10px; background:#e8edfa; border-radius:6px; overflow:hidden; margin:14px 0 6px}
+  .progress div{height:100%; background:var(--blue); width:0; transition:width .2s}
+  .muted{font-size:12px; color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">▶</div>
+  <h1>TV DIGITAL <span style="color:#5b8bf7">UPDATES</span><small>Panel de control del catálogo</small></h1>
+  <div class="grow"></div>
+  <button class="btn ghost" onclick="loadFromServer()">⟳ Recargar</button>
+  <button class="btn ghost" onclick="logout()">Salir</button>
+</header>
+
+<main id="app"></main>
+
+<footer class="bar">
+  <div class="status" id="status">Cargando…</div>
+  <button class="btn primary" onclick="saveToServer()">💾 Guardar y publicar</button>
+</footer>
+
+<div class="overlay hidden" id="login">
+  <form class="dialog" onsubmit="doLogin(event)">
+    <h3>Panel TV DIGITAL UPDATES</h3>
+    <p class="muted">Ingresá la clave del panel.</p>
+    <input type="password" id="pw" autocomplete="current-password" placeholder="Clave">
+    <div class="err" id="loginErr"></div>
+    <div class="actions"><button class="btn primary">Entrar</button></div>
+  </form>
+</div>
+
+<div class="overlay hidden" id="modal"><div class="dialog wide" id="modalBody"></div></div>
+
+<input type="file" id="apkInput" accept=".apk,application/vnd.android.package-archive" hidden onchange="startUpload(this.files[0]); this.value=''">
+
+<script>
+/* ================= Estado ================= */
+const MANAGER_PKG = "com.privatestore.tvmanager";
+let panelKey = "";
+let server = { github:false, repo:"" };
+let cat = emptyCatalog();
+let dirty = false, busy = false;
+
+function emptyCatalog(){
+  return { banner:"", managerApp:null, apps:[], featured:[], news:[], tutorials:[],
+           events:[], channels:[], promo:{title:"",subtitle:"",qrUrl:""}, tipConsejo:"", tipSeguridad:"" };
+}
+
+/* ============ Esquema de secciones de lista ============ */
+// img: carpeta del servidor donde se guarda la imagen subida con 📷.
+const LISTS = [
+  { key:"apps", icon:"📱", title:"Apps del catálogo",
+    hint:"Para agregar o actualizar una app usá ⬆ Subir APK: los datos se completan solos. Acá podés corregir el nombre, el ícono, las novedades o marcar un mantenimiento (vacío = sin mantenimiento).",
+    fields:[
+      {k:"appName",l:"Nombre visible",c:"c4"},
+      {k:"packageName",l:"Package name",c:"c4",ph:"com.ejemplo.app"},
+      {k:"versionCode",l:"versionCode",c:"c2",num:true},
+      {k:"versionName",l:"versionName",c:"c2",ph:"1.0.0"},
+      {k:"downloadUrl",l:"URL de descarga del APK",c:"c12"},
+      {k:"iconUrl",l:"Ícono",c:"c8",img:"icons"},
+      {k:"maintenanceLabel",l:"Mantenimiento programado (vacío = ninguno)",c:"c4",ph:"26/05 a las 02:00 hs"},
+      {k:"changelog",l:"Novedades de esta versión",c:"c8"},
+      {k:"sha256",l:"SHA256",c:"c4"}
+    ]},
+  { key:"news", icon:"📰", title:"Noticias",
+    hint:"Se muestran las 3 primeras en el inicio; todas en la pantalla Noticias. El ícono es un emoji.",
+    fields:[
+      {k:"icon",l:"Emoji",c:"c2",ph:"🚀"},
+      {k:"title",l:"Título",c:"c6"},
+      {k:"timeLabel",l:"Cuándo",c:"c4",ph:"Hace 2 días"},
+      {k:"subtitle",l:"Descripción corta",c:"c12"}
+    ]},
+  { key:"tutorials", icon:"🎬", title:"Tutoriales",
+    hint:"Al tocarlos en el TV se abre el enlace del video (YouTube u otro).",
+    fields:[
+      {k:"title",l:"Título",c:"c6"},
+      {k:"duration",l:"Duración",c:"c2",ph:"04:35"},
+      {k:"videoUrl",l:"Enlace del video",c:"c4"},
+      {k:"subtitle",l:"Descripción corta",c:"c6"},
+      {k:"thumbnailUrl",l:"Miniatura",c:"c6",img:"tutorials"}
+    ]},
+  { key:"events", icon:"📅", title:"Próximos eventos",
+    hint:"Se muestran los 3 primeros en el inicio; todos en la pantalla Eventos. La etiqueta aparece en rojo (canal que lo transmite).",
+    fields:[
+      {k:"icon",l:"Emoji",c:"c2",ph:"⚽"},
+      {k:"title",l:"Título",c:"c6"},
+      {k:"tag",l:"Etiqueta (canal)",c:"c4",ph:"ESPN Premium"},
+      {k:"subtitle",l:"Fecha y hora",c:"c12",ph:"Dom. 25 May • 17:00 hs"}
+    ]},
+  { key:"channels", icon:"📺", title:"Canales destacados",
+    hint:"Vidriera informativa de logos. Se muestran los 6 primeros en el inicio.",
+    fields:[
+      {k:"name",l:"Nombre",c:"c4"},
+      {k:"logoUrl",l:"Logo",c:"c8",img:"channels"}
+    ]},
+  { key:"featured", icon:"📢", title:"Imágenes destacadas",
+    hint:"Banners promocionales (imágenes 2:1, ideal 800×400px). Los textos son opcionales: si la imagen ya trae el texto, dejalos vacíos.",
+    fields:[
+      {k:"imageUrl",l:"Imagen",c:"c12",img:"featured"},
+      {k:"title",l:"Título (opcional)",c:"c4"},
+      {k:"dateLabel",l:"Insignia de fecha (opcional, \\n separa líneas)",c:"c3",ph:"DOM\\n18\\nMAY"},
+      {k:"timeLabel",l:"Horario (opcional)",c:"c3",ph:"Domingo 18:30 hs"},
+      {k:"tag",l:"Etiqueta (opcional)",c:"c2",ph:"ESPN"}
+    ]}
+];
+
+/* ================= Servidor ================= */
+async function api(action, {params={}, body, json, type}={}){
+  const headers = {"X-Panel-Key": panelKey};
+  if(json !== undefined){ body = JSON.stringify(json); headers["Content-Type"] = "application/json"; }
+  else if(body !== undefined){ headers["Content-Type"] = type || "application/octet-stream"; }
+  let r;
+  try{
+    r = await fetch("api.php?" + new URLSearchParams({action, ...params}),
+                    {method: body !== undefined ? "POST" : "GET", headers, body});
+  }catch(e){
+    throw Object.assign(new Error("Sin conexión con el servidor"), {recoverable:true});
+  }
+  let res = null;
+  try{ res = await r.json(); }catch(e){}
+  if(!res) throw Object.assign(new Error("El servidor respondió HTTP " + r.status), {recoverable: r.status >= 500});
+  if(r.status === 403){ logout(); throw new Error("Clave incorrecta"); }
+  if(!res.ok) throw new Error(res.error || ("HTTP " + r.status));
+  return res;
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ================= Acceso ================= */
+async function doLogin(ev){
+  ev && ev.preventDefault();
+  const pw = document.getElementById("pw").value;
+  if(!pw) return;
+  panelKey = pw;
+  const err = document.getElementById("loginErr");
+  err.textContent = "Verificando…";
+  try{
+    await enter();
+    try{ localStorage.setItem("panelKey", pw); }catch(e){}
+  }catch(e){
+    err.textContent = e.message;
+  }
+}
+async function enter(){
+  const info = await api("ping");
+  server = info;
+  document.getElementById("login").classList.add("hidden");
+  if(info.hasCatalog) return loadFromServer();
+  render();
+  setStatus("Este servidor todavía no tiene catálogo.");
+  if(confirm("Este servidor todavía no tiene catálogo.\n\n¿Importar el catálogo actual de apps.tvdigital.shop para empezar desde ahí?")) importFrom();
+}
+function logout(){
+  panelKey = "";
+  try{ localStorage.removeItem("panelKey"); }catch(e){}
+  document.getElementById("pw").value = "";
+  document.getElementById("loginErr").textContent = "";
+  document.getElementById("login").classList.remove("hidden");
+  setTimeout(() => document.getElementById("pw").focus(), 50);
+}
+
+/* ================= Render ================= */
+const app = document.getElementById("app");
+function esc(s){ return (s ?? "").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;"); }
+
+function fieldHtml(listKey, idx, f, val){
+  const v = f.k === "dateLabel" ? (val ?? "").replace(/\n/g, "\\n") : (val ?? "");
+  const input = `<input type="${f.num ? "number" : "text"}" placeholder="${esc(f.ph || (f.img ? "https://… o subí una imagen" : ""))}" value="${esc(v)}"
+      oninput="setItem('${listKey}',${idx},'${f.k}',this)">`;
+  if(!f.img) return `<label class="f ${f.c}">${f.l}${input}</label>`;
+  return `<label class="f ${f.c}">${f.l}<div class="imgrow">
+      <img src="${esc(v)}" alt="" onerror="this.removeAttribute('src')">${input}
+      <button type="button" class="btn mini" onclick="pickImage('${listKey}',${idx},'${f.k}','${f.img}')">📷 Subir</button>
+    </div></label>`;
+}
+
+function render(){
+  let h = "";
+  for(const L of LISTS){
+    const items = cat[L.key] || [];
+    h += `<section><h2>${L.icon} ${L.title}<span class="pill ${items.length ? "" : "warn"}">${items.length}</span></h2>
+      <p class="hint">${L.hint}</p>`;
+    if(L.key === "apps") h += uploadBoxHtml();
+    items.forEach((it, i) => {
+      h += `<div class="item"><div class="rowtop">
+        <button class="btn mini" ${i === 0 ? "disabled" : ""} onclick="moveItem('${L.key}',${i},-1)">↑</button>
+        <button class="btn mini" ${i === items.length - 1 ? "disabled" : ""} onclick="moveItem('${L.key}',${i},1)">↓</button>
+        <button class="btn mini danger" onclick="delItem('${L.key}',${i})">✕ Quitar</button>
+      </div><div class="grid">`;
+      for(const f of L.fields) h += fieldHtml(L.key, i, f, it[f.k]);
+      h += `</div></div>`;
+    });
+    h += `<div class="addrow"><button class="btn" onclick="addItem('${L.key}')">＋ Agregar ${L.key === "apps" ? "a mano" : ""}</button></div></section>`;
+    if(L.key === "apps") h += bannerHtml();
+  }
+
+  h += `
+  <section><h2>🔗 Tarjeta con QR</h2>
+    <p class="hint">El QR se genera en el TV a partir de esta URL. Dejala vacía para ocultar el código.</p>
+    <div class="grid">
+      <label class="f c4">Título<input value="${esc(cat.promo?.title)}" oninput="promoSet('title',this.value)"></label>
+      <label class="f c8">Subtítulo<input value="${esc(cat.promo?.subtitle)}" oninput="promoSet('subtitle',this.value)"></label>
+      <label class="f c12">URL del QR<input placeholder="https://whatsapp.com/channel/..." value="${esc(cat.promo?.qrUrl)}" oninput="promoSet('qrUrl',this.value)"></label>
+    </div>
+  </section>
+
+  <section><h2>⭐ Consejos del pie</h2>
+    <div class="grid">
+      <label class="f c6">Consejo<input value="${esc(cat.tipConsejo)}" oninput="cat.tipConsejo=this.value; touch()"></label>
+      <label class="f c6">Seguridad<input value="${esc(cat.tipSeguridad)}" oninput="cat.tipSeguridad=this.value; touch()"></label>
+    </div>
+  </section>
+
+  <section><details class="adv"><summary>⚙️ Auto-actualización del Administrador (managerApp)</summary>
+    <p class="hint">Se completa sola al subir el APK del Administrador con ⬆ Subir APK. El TV compara el versionCode con el instalado.</p>
+    <div class="grid">
+      <label class="f c2">versionCode<input type="number" value="${esc(cat.managerApp?.versionCode)}" oninput="mgrSet('versionCode',this)"></label>
+      <label class="f c2">versionName<input value="${esc(cat.managerApp?.versionName)}" oninput="mgrSet('versionName',this)"></label>
+      <label class="f c8">URL del APK<input value="${esc(cat.managerApp?.downloadUrl)}" oninput="mgrSet('downloadUrl',this)"></label>
+      <label class="f c8">SHA256<input value="${esc(cat.managerApp?.sha256)}" oninput="mgrSet('sha256',this)"></label>
+      <label class="f c4">Novedades<input value="${esc(cat.managerApp?.changelog)}" oninput="mgrSet('changelog',this)"></label>
+    </div>
+  </details></section>
+
+  <section><details class="adv"><summary>🧰 Herramientas</summary>
+    <p class="hint">Cada vez que guardás queda una copia del catálogo anterior en el servidor (las últimas 30).</p>
+    <div class="grid">
+      <label class="f c8">Importar catálogo desde una URL<input id="importUrl" value="https://apps.tvdigital.shop/catalog.json"></label>
+      <div class="c4" style="display:flex;align-items:flex-end"><button class="btn" onclick="importFrom(document.getElementById('importUrl').value)">⬇ Importar</button></div>
+    </div>
+    <div class="addrow">
+      <button class="btn" onclick="fileInput.click()">📂 Abrir archivo JSON…</button>
+      <button class="btn" onclick="downloadJson()">💾 Descargar copia</button>
+      <button class="btn" onclick="copyJson()">Copiar JSON</button>
+      <input type="file" id="fileInput" accept=".json" hidden onchange="loadFromFile(this.files[0]); this.value=''">
+    </div>
+  </details></section>`;
+
+  app.innerHTML = h;
+}
+
+function uploadBoxHtml(){
+  const ok = server.github;
+  return `<div class="uploadbox">
+    <button class="btn primary big" ${ok ? "" : "disabled"} onclick="apkInput.click()">⬆ Subir APK</button>
+    <p>${ok
+      ? "App nueva o actualización (también la del Administrador). Se sacan solos el nombre, la versión, el SHA256 y el ícono, y el APK se publica en GitHub."
+      : "⚠ Falta configurar GITHUB_TOKEN en el servidor para publicar APKs."}</p>
+  </div>`;
+}
+
+function bannerHtml(){
+  return `<section><h2>👋 Mensaje de bienvenida</h2>
+    <p class="hint">Texto libre del cartel de arriba. Los números de teléfono se resaltan solos en azul.</p>
+    <div class="grid"><label class="f c12">Mensaje
+      <textarea oninput="cat.banner=this.value; touch()">${esc(cat.banner)}</textarea></label></div>
+  </section>`;
+}
+
+/* ================= Edición ================= */
+const statusEl = document.getElementById("status");
+function setStatus(t){ statusEl.textContent = t; }
+function touch(){ dirty = true; setStatus("Hay cambios sin guardar — tocá 💾 Guardar y publicar."); }
+
+function setItem(key, i, k, input){
+  let v = input.value;
+  if(k === "dateLabel") v = v.replace(/\\n/g, "\n");
+  if(input.type === "number"){
+    const n = parseInt(v, 10);
+    input.classList.toggle("invalid", v !== "" && (!Number.isFinite(n) || n < 0));
+    v = Number.isFinite(n) ? n : 0;
+  }
+  const img = input.previousElementSibling;
+  if(img && img.tagName === "IMG") img.src = v;
+  cat[key][i][k] = v; touch();
+}
+function blank(key){ const o = {}; LISTS.find(l => l.key === key).fields.forEach(f => o[f.k] = f.num ? 0 : ""); return o; }
+function addItem(key){ (cat[key] = cat[key] || []).push(blank(key)); render(); touch(); }
+function delItem(key, i){ if(confirm("¿Quitar este elemento?")){ cat[key].splice(i, 1); render(); touch(); } }
+function moveItem(key, i, d){ const a = cat[key]; [a[i], a[i + d]] = [a[i + d], a[i]]; render(); touch(); }
+function promoSet(k, v){ cat.promo = cat.promo || {}; cat.promo[k] = v; touch(); }
+function mgrSet(k, input){
+  cat.managerApp = cat.managerApp || {};
+  cat.managerApp[k] = input.type === "number" ? (parseInt(input.value, 10) || 0) : input.value;
+  touch();
+}
+
+function pickFile(accept){
+  return new Promise(resolve => {
+    const inp = document.createElement("input");
+    inp.type = "file"; inp.accept = accept;
+    inp.onchange = () => resolve(inp.files[0] || null);
+    inp.click();
+  });
+}
+async function uploadImage(blob, kind){
+  return (await api("image", {params:{kind}, body:blob, type: blob.type || "application/octet-stream"})).url;
+}
+async function pickImage(key, i, k, kind){
+  const file = await pickFile("image/*");
+  if(!file) return;
+  setStatus("Subiendo imagen…");
+  try{
+    cat[key][i][k] = await uploadImage(file, kind);
+    render(); touch();
+  }catch(e){ setStatus("No se pudo subir la imagen: " + e.message); }
+}
+
+/* ================= Carga ================= */
+function ingest(json){
+  cat = Object.assign(emptyCatalog(), json);
+  cat.promo = cat.promo || {title:"", subtitle:"", qrUrl:""};
+  for(const L of LISTS) cat[L.key] = Array.isArray(cat[L.key]) ? cat[L.key] : [];
+  render(); dirty = false;
+}
+async function loadFromServer(){
+  if(dirty && !confirm("Tenés cambios sin guardar. ¿Descartarlos y recargar?")) return;
+  try{
+    const r = await fetch("catalog.json", {cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    ingest(await r.json());
+    setStatus("Catálogo cargado.");
+  }catch(e){
+    render();
+    setStatus("No se pudo cargar el catálogo del servidor (" + e.message + ").");
+  }
+}
+async function importFrom(url){
+  setStatus("Importando…");
+  try{
+    const res = await api("import", {params: url ? {url} : {}});
+    ingest(res.catalog); touch();
+    setStatus("Catálogo importado — revisalo y tocá 💾 Guardar y publicar para dejarlo en este servidor.");
+  }catch(e){ setStatus("No se pudo importar: " + e.message); }
+}
+function loadFromFile(file){
+  if(!file) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    try{ ingest(JSON.parse(fr.result)); touch(); setStatus("Archivo cargado: " + file.name + " — tocá Guardar para publicarlo."); }
+    catch(e){ alert("El archivo no es un JSON válido: " + e.message); }
+  };
+  fr.readAsText(file, "utf-8");
+}
+
+/* ================= Guardado ================= */
+const orNull = v => (v === undefined || v === null || String(v).trim() === "") ? null : v;
+function buildJson(){
+  const out = { banner: cat.banner };
+  const mgr = cat.managerApp;
+  if(mgr && (mgr.versionCode || mgr.downloadUrl)) out.managerApp = {...mgr, changelog: mgr.changelog || "", sha256: orNull(mgr.sha256)};
+  // Vacío → null: el TV interpreta "" en mantenimiento como "en mantenimiento".
+  out.apps = cat.apps.map(a => ({...a, changelog: a.changelog || "",
+    iconUrl: orNull(a.iconUrl), sha256: orNull(a.sha256), maintenanceLabel: orNull(a.maintenanceLabel)}));
+  if(cat.featured.length) out.featured = cat.featured;
+  if(cat.news.length) out.news = cat.news;
+  if(cat.tutorials.length) out.tutorials = cat.tutorials;
+  if(cat.events.length) out.events = cat.events;
+  if(cat.channels.length) out.channels = cat.channels;
+  if(cat.promo && (cat.promo.qrUrl || cat.promo.title)) out.promo = cat.promo;
+  if(cat.tipConsejo) out.tipConsejo = cat.tipConsejo;
+  if(cat.tipSeguridad) out.tipSeguridad = cat.tipSeguridad;
+  return JSON.stringify(out, null, 2);
+}
+function validate(){
+  const errs = [];
+  cat.apps.forEach((a, i) => {
+    const n = `App #${i + 1} (${a.appName || "sin nombre"})`;
+    if(!a.packageName) errs.push(`${n}: falta el package name`);
+    if(!a.downloadUrl) errs.push(`${n}: falta la URL de descarga`);
+    if(!a.versionCode) errs.push(`${n}: versionCode debe ser mayor a 0`);
+  });
+  return errs;
+}
+async function saveToServer({quiet=false}={}){
+  const errs = validate();
+  if(errs.length && !quiet && !confirm("Ojo, hay datos incompletos:\n\n• " + errs.join("\n• ") + "\n\n¿Guardar igual?")) return false;
+  setStatus("Guardando…");
+  try{
+    await api("save", {body: buildJson(), type: "application/json"});
+    dirty = false;
+    setStatus("✅ Publicado — los TVs lo toman en el próximo refresco (o al instante tocando ⟳ en el TV).");
+    return true;
+  }catch(e){
+    setStatus("No se pudo guardar: " + e.message);
+    return false;
+  }
+}
+function downloadJson(){
+  const blob = new Blob([buildJson()], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "catalog.json"; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function copyJson(){
+  navigator.clipboard.writeText(buildJson()).then(() => setStatus("JSON copiado al portapapeles."));
+}
+
+/* ================= Subida de APK ================= */
+const CHUNK = 4 * 1024 * 1024; // fragmentos chicos: el proxy corta pedidos de más de ~60 s
+let up = null;                 // {id, file, meta, icon, name, changelog}
+
+function modal(html){ document.getElementById("modalBody").innerHTML = html; document.getElementById("modal").classList.remove("hidden"); }
+function closeModal(){ document.getElementById("modal").classList.add("hidden"); }
+function progressHtml(title, text, pct){
+  return `<h3>${title}</h3><div class="progress"><div id="bar" style="width:${pct}%"></div></div><p class="muted" id="ptext">${text}</p>`;
+}
+function setProgress(pct, text){
+  const b = document.getElementById("bar"), t = document.getElementById("ptext");
+  if(b) b.style.width = pct + "%";
+  if(t && text) t.textContent = text;
+}
+
+async function startUpload(file){
+  if(!file) return;
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, "0")).join("");
+  up = {id, file};
+  busy = true;
+  const mb = n => (n / 1048576).toFixed(1);
+  modal(progressHtml("Subiendo " + esc(file.name), "0 de " + mb(file.size) + " MB", 0));
+  try{
+    for(let off = 0; off < file.size; off += CHUNK){
+      const part = file.slice(off, off + CHUNK);
+      for(let attempt = 1; ; attempt++){
+        try{ await api("chunk", {params:{id, offset: off}, body: part}); break; }
+        catch(e){ if(!e.recoverable || attempt >= 4) throw e; await sleep(2000 * attempt); }
+      }
+      const done = Math.min(off + CHUNK, file.size);
+      setProgress(Math.round(done / file.size * 100), mb(done) + " de " + mb(file.size) + " MB");
+    }
+    setProgress(100, "Leyendo los datos del APK…");
+    up.meta = await api("analyze", {params:{id}});
+    setProgress(100, "Preparando el ícono…");
+    up.icon = await renderIcon(up.meta.icon);
+    const old = findExisting(up.meta.packageName).item;
+    up.name = (old && old.appName) || up.meta.appName;
+    up.changelog = "";
+    showAnalysis();
+  }catch(e){
+    busy = false;
+    modal(`<h3>No se pudo subir el APK</h3><div class="line bad">${esc(e.message)}</div>
+      <div class="actions"><button class="btn" onclick="closeModal()">Cerrar</button></div>`);
+  }
+}
+
+function findExisting(pkg){
+  if(pkg === MANAGER_PKG) return {manager:true, item: cat.managerApp && cat.managerApp.versionCode ? {...cat.managerApp, appName:"Administrador"} : null};
+  return {manager:false, item: cat.apps.find(a => a.packageName === pkg) || null};
+}
+const ANDROID = {17:"4.2",18:"4.3",19:"4.4",21:"5.0",22:"5.1",23:"6",24:"7.0",25:"7.1",26:"8.0",27:"8.1",28:"9",29:"10",30:"11",31:"12",32:"12L",33:"13",34:"14",35:"15",36:"16"};
+function abiInfo(abis){
+  const a32 = abis.includes("armeabi-v7a"), a64 = abis.includes("arm64-v8a");
+  if(!abis.length) return ["ok", "Universal: anda en cualquier equipo."];
+  if(a32 && a64) return ["ok", "Incluye 32 y 64 bits: anda en cualquier TV Box."];
+  if(a32) return ["warn", "Solo 32 bits (armeabi-v7a): anda en casi todos los TV Box, pero no en los pocos equipos que son solo de 64 bits."];
+  if(a64) return ["bad", "Solo 64 bits (arm64-v8a): NO se instala en TV Box de 32 bits."];
+  return ["warn", "Arquitecturas: " + abis.join(", ")];
+}
+
+function showAnalysis(){
+  const m = up.meta, ex = findExisting(m.packageName), old = ex.item;
+  const [abiCls, abiTxt] = abiInfo(m.abis || []);
+  let ver;
+  if(!old) ver = `<div class="line ok">${ex.manager ? "Primera publicación del Administrador." : "App nueva: se agrega al catálogo."}</div>`;
+  else if(m.versionCode > (old.versionCode || 0)) ver = `<div class="line ok">Actualiza <b>${esc(old.appName)}</b>: v${esc(old.versionName)} (${old.versionCode}) → <b>v${esc(m.versionName)} (${m.versionCode})</b></div>`;
+  else ver = `<div class="line bad">El versionCode ${m.versionCode} no es mayor al publicado (${old.versionCode}): los TV no la van a ofrecer como actualización.</div>`;
+
+  modal(`
+    <h3>${ex.manager ? "Nueva versión del Administrador" : "Datos del APK"}</h3>
+    <div class="apkhead">
+      <div class="iconbox">${up.icon ? `<img src="${up.icon}" alt="">` : "Sin ícono automático"}</div>
+      <div class="facts">
+        <b>${esc(m.appName)}</b> · v${esc(m.versionName)} (versionCode ${m.versionCode})<br>
+        ${esc(m.packageName)}<br>
+        ${(m.size / 1048576).toFixed(1)} MB · ${m.minSdk ? "Android " + (ANDROID[m.minSdk] || "API " + m.minSdk) + " o superior" : ""}
+      </div>
+    </div>
+    <div class="addrow">
+      <button class="btn mini" onclick="replaceIcon()">🖼 Usar otra imagen como ícono</button>
+      ${!up.icon && old && old.iconUrl ? `<span class="muted">Se conserva el ícono actual.</span>` : ""}
+    </div>
+    ${ver}
+    <div class="line ${abiCls}">${abiTxt}</div>
+    ${m.tv ? "" : `<div class="line warn">El APK no declara lanzador de Android TV: puede no aparecer en el menú de apps del TV.</div>`}
+    <div class="grid" style="margin-top:12px">
+      ${ex.manager ? "" : `<label class="f c12">Nombre visible en el TV<input value="${esc(up.name)}" oninput="up.name=this.value"></label>`}
+      <label class="f c12">Novedades de esta versión<textarea placeholder="Mejoras de estabilidad" oninput="up.changelog=this.value">${esc(up.changelog)}</textarea></label>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="cancelUpload()">Cancelar</button>
+      <button class="btn primary" onclick="publishUpload()">🚀 Publicar</button>
+    </div>`);
+}
+
+async function replaceIcon(){
+  const file = await pickFile("image/*");
+  if(!file) return;
+  try{
+    up.icon = await renderIcon({type:"image", src: await readAsDataUrl(file)}, true);
+    showAnalysis();
+  }catch(e){ alert("No se pudo leer la imagen: " + e.message); }
+}
+function readAsDataUrl(file){
+  return new Promise((ok, ko) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = () => ko(fr.error); fr.readAsDataURL(file); });
+}
+
+async function cancelUpload(){
+  closeModal(); busy = false;
+  if(up) api("discard", {params:{id: up.id}, body: ""}).catch(() => {});
+  up = null;
+}
+
+async function publishUpload(){
+  const {id, meta} = up;
+  if(meta.versionCode <= ((findExisting(meta.packageName).item || {}).versionCode || 0)
+     && !confirm("El versionCode no es mayor al publicado: los TV no lo van a tomar como actualización. ¿Publicar igual?")) return;
+  modal(progressHtml("Publicando " + esc(up.name || meta.appName), "Subiendo el APK a GitHub… no cierres esta página.", 100));
+  document.getElementById("bar").style.opacity = .5;
+  try{
+    let r;
+    try{
+      r = await api("publish", {params:{id}, json:{appName: up.name, changelog: up.changelog}});
+    }catch(e){
+      if(!e.recoverable) throw e;
+      setProgress(100, "Se cortó la conexión, esperando que el servidor termine…");
+      r = await waitPublishResult(id);
+    }
+
+    let iconUrl = null;
+    if(up.icon){
+      setProgress(100, "Subiendo el ícono…");
+      try{ iconUrl = await uploadImage(await (await fetch(up.icon)).blob(), "icons"); }catch(e){}
+    }
+    applyPublished(r, iconUrl);
+    render();
+    setProgress(100, "Guardando el catálogo…");
+    const saved = await saveToServer({quiet:true});
+    busy = false; up = null;
+    modal(`<h3>${saved ? "✅ Publicado" : "⚠ Falta guardar"}</h3>
+      <div class="line ${saved ? "ok" : "warn"}">${saved
+        ? `<b>${esc(r.appName)} v${esc(r.versionName)}</b> ya está en el catálogo. Los TV la ven en el próximo refresco.`
+        : `El APK se publicó en GitHub, pero no se pudo guardar el catálogo. Tocá 💾 Guardar y publicar.`}</div>
+      <p class="muted" style="margin-top:10px"><a href="${esc(r.releaseUrl)}" target="_blank" rel="noopener">Ver el Release en GitHub</a></p>
+      <div class="actions"><button class="btn primary" onclick="closeModal()">Listo</button></div>`);
+  }catch(e){
+    busy = false;
+    modal(`<h3>No se pudo publicar</h3><div class="line bad">${esc(e.message)}</div>
+      <div class="actions"><button class="btn" onclick="cancelUpload()">Cerrar</button>
+      <button class="btn primary" onclick="showAnalysis()">Reintentar</button></div>`);
+  }
+}
+
+async function waitPublishResult(id){
+  const until = Date.now() + 20 * 60 * 1000;
+  while(Date.now() < until){
+    await sleep(5000);
+    try{
+      const s = await api("result", {params:{id}});
+      if(s.done){
+        if(!s.result.ok) throw new Error(s.result.error);
+        return s.result;
+      }
+    }catch(e){ if(!e.recoverable) throw e; }
+  }
+  throw new Error("No hubo respuesta del servidor. Revisá en GitHub si el Release se creó antes de reintentar.");
+}
+
+function applyPublished(r, iconUrl){
+  if(r.packageName === MANAGER_PKG){
+    cat.managerApp = {versionCode: r.versionCode, versionName: r.versionName, downloadUrl: r.downloadUrl,
+                      changelog: r.changelog || "", sha256: r.sha256};
+    return;
+  }
+  const i = cat.apps.findIndex(a => a.packageName === r.packageName);
+  const old = i >= 0 ? cat.apps[i] : {maintenanceLabel: null};
+  const entry = {...old, packageName: r.packageName, appName: r.appName, versionCode: r.versionCode,
+    versionName: r.versionName, downloadUrl: r.downloadUrl, changelog: r.changelog || "",
+    iconUrl: iconUrl || old.iconUrl || null, sha256: r.sha256};
+  if(i >= 0) cat.apps[i] = entry; else cat.apps.push(entry);
+}
+
+/* ================= Dibujo del ícono =================
+ * El servidor describe el ícono del APK (imagen, vector, degradados o
+ * adaptive-icon con fondo + frente); acá se dibuja en un canvas de 512 px y se
+ * sube como PNG, que es lo que el TV sabe mostrar.
+ */
+const ICON_PX = 512;
+const num = (v, d = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
+function argb(c){
+  if(typeof c !== "string" || !/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(c)) return null;
+  const h = c.length === 7 ? "ff" + c.slice(1) : c.slice(1);
+  return {rgb: "#" + h.slice(2), a: parseInt(h.slice(0, 2), 16) / 255};
+}
+function rgba(c){
+  const k = argb(c); if(!k) return null;
+  const n = parseInt(k.rgb.slice(1), 16);
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${k.a})`;
+}
+const isXml = (d, tag) => d && typeof d === "object" && d.type === "xml" && (!tag || d.tree.tag === tag);
+function loadImg(src){
+  return new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ko(new Error("imagen ilegible")); i.src = src; });
+}
+/** El drawable de una capa: atributo android:drawable o el primer hijo. */
+function layerOf(node){
+  const d = node.attrs.drawable;
+  if(d && (typeof d === "object" || argb(d))) return d;
+  return node.children[0] ? {type:"xml", tree: node.children[0]} : null;
+}
+function insetPx(v, size){
+  if(v == null || typeof v !== "string") return 0;
+  if(v.endsWith("%")) return num(v) / 100 * size;
+  if(v.endsWith("dp")) return num(v) / 108 * size; // las capas adaptativas miden 108 dp
+  return 0;
+}
+
+async function renderIcon(spec, cover){
+  if(!spec) return null;
+  const attempt = async d => {
+    const c = document.createElement("canvas");
+    c.width = c.height = ICON_PX;
+    const ctx = c.getContext("2d");
+    if(cover && d.type === "image"){ // imagen elegida a mano: recorte centrado
+      const img = await loadImg(d.src), s = Math.min(img.width, img.height);
+      ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, ICON_PX, ICON_PX);
+    } else {
+      await draw(ctx, d, 0, 0, ICON_PX, ICON_PX);
+    }
+    const px = ctx.getImageData(0, 0, ICON_PX, ICON_PX).data;
+    for(let i = 3; i < px.length; i += 4 * 61) if(px[i] > 0) return c.toDataURL("image/png");
+    return null; // quedó vacío
+  };
+  try{ const r = await attempt(spec); if(r) return r; }catch(e){ console.warn("ícono:", e); }
+  if(spec.fallback){ try{ return await attempt(spec.fallback); }catch(e){ console.warn("ícono (respaldo):", e); } }
+  return null;
+}
+
+async function draw(ctx, d, x, y, w, h){
+  if(d == null) return;
+  if(typeof d === "string"){ const c = rgba(d); if(c){ ctx.fillStyle = c; ctx.fillRect(x, y, w, h); } return; }
+  if(d.type === "image"){ ctx.drawImage(await loadImg(d.src), x, y, w, h); return; }
+  if(d.type !== "xml") return;
+  const t = d.tree, a = t.attrs;
+  switch(t.tag){
+    case "adaptive-icon": { // capas de 108 dp de las que se ve el centro de 72 dp
+      const s = w * 108 / 72, o = (s - w) / 2;
+      const bg = t.children.find(c => c.tag === "background"), fg = t.children.find(c => c.tag === "foreground");
+      if(bg) await draw(ctx, layerOf(bg), x - o, y - o, s, s);
+      if(fg) await draw(ctx, layerOf(fg), x - o, y - o, s, s);
+      return;
+    }
+    case "vector": {
+      const img = await loadImg("data:image/svg+xml;charset=utf-8," + encodeURIComponent(vectorToSvg(t, Math.ceil(w), Math.ceil(h))));
+      ctx.drawImage(img, x, y, w, h);
+      return;
+    }
+    case "bitmap": case "nine-patch": return draw(ctx, a.src, x, y, w, h);
+    case "animated-vector": return draw(ctx, a.drawable, x, y, w, h);
+    case "color": return draw(ctx, a.color, x, y, w, h);
+    case "inset": {
+      const L = insetPx(a.insetLeft ?? a.inset, w), T = insetPx(a.insetTop ?? a.inset, h);
+      const R = insetPx(a.insetRight ?? a.inset, w), B = insetPx(a.insetBottom ?? a.inset, h);
+      return draw(ctx, layerOf(t), x + L, y + T, w - L - R, h - T - B);
+    }
+    case "layer-list":
+      for(const it of t.children.filter(c => c.tag === "item")){
+        const L = insetPx(it.attrs.left, w), T = insetPx(it.attrs.top, h), R = insetPx(it.attrs.right, w), B = insetPx(it.attrs.bottom, h);
+        await draw(ctx, layerOf(it), x + L, y + T, w - L - R, h - T - B);
+      }
+      return;
+    case "selector": case "level-list": case "animated-selector": {
+      const it = t.children.find(c => c.tag === "item");
+      return it ? draw(ctx, layerOf(it), x, y, w, h) : undefined;
+    }
+    case "shape": return drawShape(ctx, t, x, y, w, h);
+    default: throw new Error("formato de ícono no soportado: " + t.tag);
+  }
+}
+
+function drawShape(ctx, t, x, y, w, h){
+  const solid = t.children.find(c => c.tag === "solid");
+  const grad = t.children.find(c => c.tag === "gradient");
+  const corners = t.children.find(c => c.tag === "corners");
+  let fill = solid ? rgba(solid.attrs.color) : null;
+  if(!fill && grad){
+    const ang = num(grad.attrs.angle) * Math.PI / 180, cx = x + w / 2, cy = y + h / 2;
+    const dx = Math.cos(ang) * w / 2, dy = -Math.sin(ang) * h / 2;
+    fill = ctx.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
+    fill.addColorStop(0, rgba(grad.attrs.startColor) || "transparent");
+    if(grad.attrs.centerColor) fill.addColorStop(.5, rgba(grad.attrs.centerColor));
+    fill.addColorStop(1, rgba(grad.attrs.endColor) || "transparent");
+  }
+  if(!fill) return;
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  if(t.attrs.shape === "1") ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+  else if(corners && ctx.roundRect) ctx.roundRect(x, y, w, h, Math.min(w, h) / 2 * Math.min(1, insetPx(corners.attrs.radius, w) / (w / 2)));
+  else ctx.rect(x, y, w, h);
+  ctx.fill();
+}
+
+/** VectorDrawable → SVG (el pathData de Android es sintaxis SVG). */
+function vectorToSvg(t, pw, ph){
+  const a = t.attrs, defs = [];
+  let uid = 0;
+  const attr = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  const paint = v => {
+    if(typeof v === "string"){ const k = argb(v); return k ? [k.rgb, k.a] : ["none", 1]; }
+    if(isXml(v, "gradient")){ const id = "g" + (uid++); defs.push(gradientSvg(v.tree, id)); return [`url(#${id})`, 1]; }
+    if(isXml(v, "selector")){ const it = v.tree.children.find(c => c.tag === "item"); return it ? paint(it.attrs.color) : ["none", 1]; }
+    return ["none", 1];
+  };
+  const caps = ["butt", "round", "square"], joins = ["miter", "round", "bevel"];
+  // Un clip-path recorta a los hermanos que vienen después dentro del mismo grupo.
+  const children = nodes => {
+    let out = "", open = 0;
+    for(const n of nodes){
+      if(n.tag === "clip-path"){
+        const id = "c" + (uid++);
+        defs.push(`<clipPath id="${id}"><path d="${attr(n.attrs.pathData || "")}"/></clipPath>`);
+        out += `<g clip-path="url(#${id})">`; open++;
+      } else out += node(n);
+    }
+    return out + "</g>".repeat(open);
+  };
+  const node = n => {
+    const p = n.attrs;
+    if(n.tag === "path"){
+      if(!p.pathData) return "";
+      const [f, fa] = paint(p.fillColor), [s, sa] = paint(p.strokeColor);
+      return `<path d="${attr(p.pathData)}" fill="${f}" fill-opacity="${fa * num(p.fillAlpha, 1)}"`
+        + ` fill-rule="${p.fillType === "1" ? "evenodd" : "nonzero"}" stroke="${s}" stroke-opacity="${sa * num(p.strokeAlpha, 1)}"`
+        + ` stroke-width="${num(p.strokeWidth)}" stroke-linecap="${caps[num(p.strokeLineCap)] || "butt"}"`
+        + ` stroke-linejoin="${joins[num(p.strokeLineJoin)] || "miter"}" stroke-miterlimit="${num(p.strokeMiterLimit, 4)}"/>`;
+    }
+    if(n.tag === "group"){
+      const px = num(p.pivotX), py = num(p.pivotY);
+      const tf = `translate(${num(p.translateX) + px} ${num(p.translateY) + py}) rotate(${num(p.rotation)})`
+        + ` scale(${num(p.scaleX, 1)} ${num(p.scaleY, 1)}) translate(${-px} ${-py})`;
+      return `<g transform="${tf}">${children(n.children)}</g>`;
+    }
+    return "";
+  };
+  const body = children(t.children);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${pw}" height="${ph}" viewBox="0 0 ${num(a.viewportWidth, 24)} ${num(a.viewportHeight, 24)}"`
+    + ` preserveAspectRatio="none"><defs>${defs.join("")}</defs><g opacity="${num(a.alpha, 1)}">${body}</g></svg>`;
+}
+
+function gradientSvg(g, id){
+  const a = g.attrs;
+  let stops = g.children.filter(c => c.tag === "item").map(c => [num(c.attrs.offset), c.attrs.color]);
+  if(!stops.length){
+    stops = [[0, a.startColor]];
+    if(a.centerColor) stops.push([0.5, a.centerColor]);
+    stops.push([1, a.endColor]);
+  }
+  const st = stops.map(([o, c]) => { const k = argb(c) || {rgb: "#000", a: 0}; return `<stop offset="${o}" stop-color="${k.rgb}" stop-opacity="${k.a}"/>`; }).join("");
+  if(a.type == null || a.type === "0"){
+    return `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${num(a.startX)}" y1="${num(a.startY)}" x2="${num(a.endX)}" y2="${num(a.endY)}">${st}</linearGradient>`;
+  }
+  // radial (1); el "sweep" (2) no existe en SVG y se aproxima como radial
+  return `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${num(a.centerX)}" cy="${num(a.centerY)}" r="${num(a.gradientRadius, 1)}">${st}</radialGradient>`;
+}
+
+/* ================= Inicio ================= */
+window.addEventListener("beforeunload", e => { if(dirty || busy){ e.preventDefault(); e.returnValue = ""; } });
+render();
+(async () => {
+  let saved = "";
+  try{ saved = localStorage.getItem("panelKey") || ""; }catch(e){}
+  if(!saved) return logout();
+  panelKey = saved;
+  try{ await enter(); }catch(e){ logout(); }
+})();
+</script>
+</body>
+</html>
