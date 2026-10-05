@@ -439,6 +439,7 @@ function validate(){
   return errs;
 }
 async function saveToServer({quiet=false}={}){
+  if(!cat.apps.length && !confirm("El catálogo no tiene ninguna app: los TV van a quedar sin apps.\n\n¿Seguro que querés guardarlo así? (Para traer el catálogo actual usá Herramientas → Importar.)")) return false;
   const errs = validate();
   if(errs.length && !quiet && !confirm("Ojo, hay datos incompletos:\n\n• " + errs.join("\n• ") + "\n\n¿Guardar igual?")) return false;
   setStatus("Guardando…");
