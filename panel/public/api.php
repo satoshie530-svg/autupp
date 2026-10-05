@@ -40,6 +40,10 @@ function respond(array $data, int $code = 200): never
     exit;
 }
 
+/**
+ * Los errores usan códigos 4xx a propósito: con un 5xx el proxy de EasyPanel
+ * reemplaza la respuesta por su propia página y el panel pierde el mensaje.
+ */
 function fail(string $msg, int $code = 400): never
 {
     respond(['ok' => false, 'error' => $msg], $code);
@@ -50,7 +54,7 @@ function data_dir(string $sub): string
     global $DATA;
     $dir = "$DATA/$sub";
     if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
-        fail("No se pudo crear $sub/ en el volumen de datos", 500);
+        fail("No se pudo crear $sub/ en el volumen de datos", 422);
     }
     return $dir;
 }
@@ -82,7 +86,7 @@ function cleanup_tmp(): void
 
 /* ======================= Autenticación ======================= */
 
-if ($CFG['password'] === '') fail('Falta configurar PANEL_PASSWORD en el servidor', 500);
+if ($CFG['password'] === '') fail('Falta configurar PANEL_PASSWORD en el servidor', 422);
 if (!hash_equals($CFG['password'], (string) ($_SERVER['HTTP_X_PANEL_KEY'] ?? ''))) {
     usleep(500000); // frena intentos de adivinar la clave
     fail('Clave incorrecta', 403);
@@ -131,7 +135,7 @@ function action_save(): never
     // Escritura atómica: los TVs nunca leen un archivo a medio escribir.
     $tmp = "$dest.tmp";
     if (@file_put_contents($tmp, $json) === false || !@rename($tmp, $dest)) {
-        fail('No se pudo escribir catalog.json (permisos del volumen)', 500);
+        fail('No se pudo escribir catalog.json (permisos del volumen)', 422);
     }
     respond(['ok' => true, 'bytes' => strlen($json)]);
 }
@@ -166,7 +170,7 @@ function action_chunk(): never
 
     if ($offset === 0) {
         cleanup_tmp();
-        if (file_put_contents($path, $body) === false) fail('No se pudo guardar el archivo', 500);
+        if (file_put_contents($path, $body) === false) fail('No se pudo guardar el archivo', 422);
         respond(['ok' => true, 'size' => $len]);
     }
 
@@ -178,7 +182,7 @@ function action_chunk(): never
         @unlink($path);
         fail('El APK supera el máximo de 400 MB');
     }
-    if (file_put_contents($path, $body, FILE_APPEND) === false) fail('No se pudo guardar el archivo', 500);
+    if (file_put_contents($path, $body, FILE_APPEND) === false) fail('No se pudo guardar el archivo', 422);
     respond(['ok' => true, 'size' => $offset + $len]);
 }
 
@@ -261,7 +265,7 @@ function action_publish(): never
     $apk = tmp_file($id, 'apk');
     $metaFile = tmp_file($id, 'json');
     if (!is_file($apk) || !is_file($metaFile)) fail('No encuentro el APK subido, probá de nuevo');
-    if ($CFG['token'] === '') fail('Falta configurar GITHUB_TOKEN en el servidor', 500);
+    if ($CFG['token'] === '') fail('Falta configurar GITHUB_TOKEN en el servidor', 422);
 
     ignore_user_abort(true);
     set_time_limit(0);
@@ -308,7 +312,7 @@ function action_publish(): never
         @unlink($apk);
         @unlink($metaFile);
     }
-    respond($result, $result['ok'] ? 200 : 502);
+    respond($result, $result['ok'] ? 200 : 422);
 }
 
 function action_result(): never
@@ -428,7 +432,7 @@ function action_image(): never
     if ($ext === null) fail('El archivo no es una imagen PNG, JPG, WEBP o GIF');
     $name = date('Ymd-His') . '-' . bin2hex(random_bytes(4)) . ".$ext";
     if (file_put_contents(data_dir("media/$kind") . "/$name", $body) === false) {
-        fail('No se pudo guardar la imagen (permisos del volumen)', 500);
+        fail('No se pudo guardar la imagen (permisos del volumen)', 422);
     }
     respond(['ok' => true, 'url' => "{$CFG['base']}/media/$kind/$name"]);
 }
@@ -497,7 +501,7 @@ function http_get(string $url): array
     $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     $err = curl_error($ch);
     curl_close($ch);
-    if ($raw === false) fail("No se pudo conectar: $err", 502);
+    if ($raw === false) fail("No se pudo conectar: $err", 422);
     return [$code, (string) $raw];
 }
 
